@@ -4,11 +4,12 @@ Every day a fresh Claude session creates one new English "crazy facts" Short and
 on YouTube via Metricool for **13:00 Europe/Berlin**.
 
 1. Setup (fresh container):
-   `apt-get install -y fonts-noto-color-emoji ffmpeg`, `pip install piper-tts numpy pillow`,
+   `apt-get install -y fonts-noto-color-emoji ffmpeg`, `python3 -m pip install piper-tts numpy pillow` (install with the SAME python3 you run make_short.py with; check `python3 -c "import numpy, piper"`),
    `mkdir -p voices && curl -sL https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-en-us-ryan-high.tar.gz | tar xz -C voices`
 2. Pick a NEW topic: list `stories/` and never repeat a topic. Use a true, well-documented,
-   surprising fact or real story (history, animals, science, everyday life). Check the facts
-   with a web search; avoid anything you cannot verify. Keep it family friendly.
+   surprising fact or real story (history, animals, science, everyday life). You MUST check every
+   number and claim with WebSearch (at least two reliable sources) before writing the story;
+   drop anything you cannot verify. Do not rely on memory alone. Keep it family friendly.
 3. Write `stories/YYYY-MM-DD-slug.json` in the same format as the existing stories:
    6–8 scenes, 25–45 s spoken, scene 1 = strong hook, last scene = `{"anim": "subscribe"}`.
    Available anims: pop (1–3 emoji), count (number counter, needs `to`, `label`, `emoji`, `under`),
