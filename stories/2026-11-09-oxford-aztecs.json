@@ -1,0 +1,15 @@
+{
+  "title": "Oxford Is Older Than the Aztec Empire 🎓 #shorts",
+  "description": "Teaching began at Oxford around 1096, more than two centuries before the Aztecs founded Tenochtitlan in 1325. Mind-blowing history!\n\n#shorts #facts #crazyfacts #history #didyouknow",
+  "tags": ["facts", "crazy facts", "oxford", "aztec", "history", "did you know", "shorts"],
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Oxford University is older than the Aztec Empire.", "anim": "pop", "emoji": ["🎓", "🏫"]},
+    {"text": "Teaching at Oxford was already happening in the year ten ninety-six.", "anim": "count", "to": 1096, "label": "YEAR", "emoji": ["📜"], "under": "🎓"},
+    {"text": "The Aztecs only founded their great city, Tenochtitlan, in thirteen twenty-five.", "anim": "run", "emoji": ["🌵"], "trail": "💨"},
+    {"text": "That means students were studying at Oxford for more than two hundred years before it even existed.", "anim": "shake", "emoji": ["📚", "🤯"]},
+    {"text": "Oxford was already teaching long before the printing press was invented.", "anim": "rain", "emoji": ["📰", "📜"], "drop": "📖"},
+    {"text": "History is far weirder than we remember it.", "anim": "zoom", "emoji": ["🌍", "🌍"], "orbit": "✨"},
+    {"text": "Subscribe for more crazy facts!", "anim": "subscribe"}
+  ]
+}
