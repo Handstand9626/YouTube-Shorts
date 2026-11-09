@@ -1,0 +1,15 @@
+{
+  "title": "Australia Lost a War… Against Birds 🐦 #shorts",
+  "description": "In 1932 Australia sent soldiers with machine guns to fight 20,000 emus – and lost. The true story of the Great Emu War.\n\n#shorts #facts #crazyfacts #history #didyouknow",
+  "tags": ["facts", "crazy facts", "emu war", "history", "did you know", "shorts"],
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Australia once lost a war. Against birds.", "anim": "pop", "emoji": ["🦘", "🐦"]},
+    {"text": "In 1932, about twenty thousand emus invaded the wheat farms of Western Australia.", "anim": "count", "to": 20000, "label": "EMUS", "emoji": ["🐦"], "under": "🌾"},
+    {"text": "So the government sent in soldiers. With machine guns.", "anim": "shake", "emoji": ["🪖", "🔫"]},
+    {"text": "But emus can sprint up to fifty kilometers per hour, and they scattered in every direction.", "anim": "run", "emoji": ["🐦"], "trail": "💨"},
+    {"text": "After weeks of fighting and thousands of bullets, the soldiers simply gave up.", "anim": "rain", "emoji": ["😩", "🪖"], "drop": "🪶"},
+    {"text": "The emus won. To this day, it's called the Great Emu War.", "anim": "zoom", "emoji": ["🏆", "👑"], "orbit": "🐦"},
+    {"text": "Subscribe for more crazy facts!", "anim": "subscribe"}
+  ]
+}
