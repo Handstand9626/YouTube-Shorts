@@ -1,0 +1,17 @@
+{
+  "title": "Cleopatra Is Closer to the Moon Landing Than the Pyramids 🚀 #shorts",
+  "description": "The Great Pyramid of Giza was finished around 2560 BC. Cleopatra died in 30 BC – about 2,500 years later. Apollo 11 landed on the Moon in 1969 – only about 2,000 years after her. So Cleopatra lived closer to the Moon landing than to the building of the Great Pyramid!\n\nSources: WorldAtlas, IFLScience, Smithsonian\n\n#shorts #facts #crazyfacts #history #didyouknow #egypt",
+  "tags": ["facts", "crazy facts", "cleopatra", "pyramids", "moon landing", "history", "did you know", "shorts"],
+  "comment": "Which fact about time blows your mind the most? 👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Cleopatra lived closer to the Moon landing than to the building of the Great Pyramid.", "anim": "title", "headline": "CLEOPATRA\nVS THE\nMOON LANDING", "emoji": ["👑", "🚀"]},
+    {"text": "The Great Pyramid of Giza was finished around 2560 B.C., for the pharaoh Khufu.", "anim": "pop", "emoji": ["🏜️", "🐪"]},
+    {"text": "Cleopatra, the last active ruler of ancient Egypt, died in 30 B.C.", "anim": "zoom", "emoji": ["👑", "🐍"], "orbit": "✨"},
+    {"text": "That means the pyramid was already about 2,500 years old in her lifetime.", "anim": "stat", "to": 2500, "suffix": " yrs", "label": "PYRAMID'S AGE IN HER TIME", "emoji": ["🏜️", "⏳"]},
+    {"text": "Now jump forward. In 1969, Apollo 11 landed on the Moon.", "anim": "timeline", "points": [{"year": "2560 BC", "label": "Pyramid", "emoji": "🏜️"}, {"year": "30 BC", "label": "Cleopatra", "emoji": "👑"}, {"year": "1969", "label": "Moon", "emoji": "🚀"}]},
+    {"text": "From Cleopatra to the Moon: about 2,000 years. From the pyramid to Cleopatra: about 2,500.", "anim": "versus", "sides": [{"emoji": "🏜️", "label": "Pyramid → Cleo", "value": "~2,500 yrs"}, {"emoji": "🚀", "label": "Cleo → Moon", "value": "~2,000 yrs"}]},
+    {"text": "Ancient Egypt was so old, it was ancient history even to the ancient Egyptians.", "anim": "rain", "emoji": ["🤯", "🏛️"], "drop": "⏳"},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}

@@ -268,8 +268,110 @@ def anim_subscribe(img, sc, lt, t, rs):
         paste_c(img, emoji("👍", 230 * ease_back((lt - 1.7) / 0.4)), W / 2 + 200, EMO_Y - 300)
 
 
+def _outlined(d, xy, text, size, fill=(255, 255, 255), stroke=10, anchor="mm", maxw=None):
+    if maxw:
+        while size > 20 and d.textlength(text, font=font(size)) + 2 * stroke > maxw:
+            size *= 0.94
+    d.text(xy, text, font=font(size), fill=fill, stroke_width=stroke, stroke_fill=(0, 0, 0), anchor=anchor)
+
+
+def anim_title(img, sc, lt, t, rs):
+    """Hook card: emoji pops, then headline words slam in one by one."""
+    ems = sc.get("emoji", [])
+    for k, ch in enumerate(ems):
+        p = ease_back((lt - 0.1 * k) / 0.4)
+        if p > 0.01:
+            cx = W / 2 + (k - (len(ems) - 1) / 2) * 300
+            paste_c(img, emoji(ch, 260 * p, angle=10 * math.sin(t * 2.5 + k)), cx, EMO_Y - 300)
+    d = ImageDraw.Draw(img, "RGBA")
+    lines = sc.get("headline", "").split("\n")
+    y = EMO_Y - 40
+    idx = 0
+    for ln in lines:
+        words = ln.split()
+        size = 112 if max((len(w) for w in words), default=1) < 11 else 92
+        widths = [d.textlength(w + " ", font=font(size)) for w in words]
+        x = (W - sum(widths) + d.textlength(" ", font=font(size))) / 2
+        for w, wd in zip(words, widths):
+            s = (lt - 0.35 - idx * 0.16) / 0.22
+            if s > 0:
+                k = 1 + 1.2 * (1 - ease_out(s))
+                col = (255, 230, 0) if idx % 3 == 1 else (255, 255, 255)
+                _outlined(d, (x + wd / 2 - d.textlength(" ", font=font(size)) / 2, y), w, size * k, col, 12, maxw=W - 60)
+            x += wd; idx += 1
+        y += 140
+
+
+def anim_stat(img, sc, lt, t, rs):
+    """Big number counting up with prefix/suffix, label, and side emoji."""
+    v = sc["to"] * ease_out(lt / 1.4)
+    dec = sc.get("decimals", 0)
+    num = f"{v:,.{dec}f}"
+    txt = f"{sc.get('prefix', '')}{num}{sc.get('suffix', '')}"
+    d = ImageDraw.Draw(img, "RGBA")
+    pulse = 1 + 0.05 * math.sin(t * 7) if lt > 1.4 else 1
+    size = 230 if len(txt) <= 6 else 180 if len(txt) <= 9 else 140
+    d.rounded_rectangle([60, EMO_Y - 230, W - 60, EMO_Y + 230], 50, fill=(0, 0, 0, 90))
+    _outlined(d, (W / 2, EMO_Y - 40), txt, size * pulse, (255, 230, 0), 14, maxw=W - 180)
+    _outlined(d, (W / 2, EMO_Y + 150), sc.get("label", ""), 70, (255, 255, 255), 8, maxw=W - 180)
+    for k, ch in enumerate(sc.get("emoji", [])[:2]):
+        p = ease_back((lt - 0.3 - 0.15 * k) / 0.4)
+        if p > 0.01:
+            paste_c(img, emoji(ch, 200 * p, angle=12 * math.sin(t * 3 + k)),
+                    150 if k == 0 else W - 150, EMO_Y - 330 + 20 * math.sin(t * 2.5 + k))
+
+
+def anim_timeline(img, sc, lt, t, rs):
+    """Horizontal timeline that draws itself; points pop in with year + emoji + label."""
+    pts = sc["points"]
+    d = ImageDraw.Draw(img, "RGBA")
+    x0, x1, y = 190, W - 190, EMO_Y + 30
+    colw = (x1 - x0) / max(1, len(pts) - 1) - 20 if len(pts) > 1 else W - 200
+    grow = ease_out(lt / 0.8)
+    d.rounded_rectangle([x0, y - 9, x0 + (x1 - x0) * grow, y + 9], 9, fill=(255, 255, 255))
+    n = len(pts)
+    for i, p in enumerate(pts):
+        x = x0 + (x1 - x0) * (i / (n - 1) if n > 1 else 0.5)
+        q = ease_back((lt - 0.6 - i * 0.55) / 0.4)
+        if q <= 0.01:
+            continue
+        r = 26 * q
+        d.ellipse([x - r, y - r, x + r, y + r], fill=(255, 230, 0), outline=(0, 0, 0), width=6)
+        _outlined(d, (x, y - 95), str(p["year"]), 96 * q, (255, 230, 0), 10, maxw=min(colw, 2 * min(x, W - x) - 30))
+        if p.get("emoji"):
+            paste_c(img, emoji(p["emoji"], 190 * q, angle=8 * math.sin(t * 2.4 + i)), x, y - 300)
+        _outlined(d, (x, y + 85), p.get("label", ""), 58 * q, (255, 255, 255), 7, maxw=min(colw, 2 * min(x, W - x) - 30))
+    gap = sc.get("gap")
+    if gap:
+        g = ease_back((lt - 0.6 - n * 0.55) / 0.45)
+        if g > 0.01:
+            d.rounded_rectangle([W / 2 - 300 * g, y + 160, W / 2 + 300 * g, y + 270], 40, fill=(230, 33, 23, 230))
+            _outlined(d, (W / 2, y + 215), gap, 66 * g, (255, 255, 255), 6, maxw=560 * g)
+
+
+def anim_versus(img, sc, lt, t, rs):
+    """Two sides slide in, VS badge pulses in the middle."""
+    d = ImageDraw.Draw(img, "RGBA")
+    sides = sc["sides"]
+    for k, s in enumerate(sides[:2]):
+        m = ease_out((lt - 0.15 * k) / 0.5)
+        tx = W * (0.27 if k == 0 else 0.73)
+        x = tx + (-700 if k == 0 else 700) * (1 - m)
+        paste_c(img, emoji(s["emoji"], 280, flip=(k == 1 and s.get("flip", False)),
+                           angle=6 * math.sin(t * 2.2 + k)), x, EMO_Y - 80)
+        _outlined(d, (x, EMO_Y + 140), s.get("label", ""), 66, (255, 255, 255), 8, maxw=W * 0.44)
+        if s.get("value"):
+            _outlined(d, (x, EMO_Y + 230), s["value"], 74, (255, 230, 0), 9, maxw=W * 0.44)
+    v = ease_back((lt - 0.55) / 0.35)
+    if v > 0.01:
+        r = 95 * v * (1 + 0.06 * math.sin(t * 8))
+        d.ellipse([W / 2 - r, EMO_Y - 80 - r, W / 2 + r, EMO_Y - 80 + r], fill=(230, 33, 23), outline="white", width=8)
+        _outlined(d, (W / 2, EMO_Y - 80), "VS", 90 * v, (255, 255, 255), 6)
+
+
 ANIMS = dict(pop=anim_pop, count=anim_count, shake=anim_shake, run=anim_run, rain=anim_rain,
-             zoom=anim_zoom, subscribe=anim_subscribe)
+             zoom=anim_zoom, subscribe=anim_subscribe, title=anim_title, stat=anim_stat,
+             timeline=anim_timeline, versus=anim_versus)
 
 
 # ---------------------------------------------------------------- background
@@ -351,6 +453,15 @@ def main(story_path, out_path):
                 add(bm, s["start"] + 0.6 + j * 0.45, 0.5); j += 1
         if anim == "zoom": add(bm, s["start"] + 0.05, 0.6)
         if anim == "subscribe": add(pp, s["start"] + 1.5, 1.0)
+        if anim == "title":
+            add(bm, s["start"] + 0.3, 0.35)
+            for j, _ in enumerate(" ".join(s.get("headline", "").split("\n")).split()):
+                add(pp, s["start"] + 0.35 + j * 0.16, 0.5)
+        if anim == "timeline":
+            for j in range(len(s["points"]) + (1 if s.get("gap") else 0)):
+                add(pp, s["start"] + 0.6 + j * 0.55, 0.9)
+        if anim == "versus": add(bm, s["start"] + 0.55, 0.5)
+        if anim == "stat": add(bm, s["start"] + 1.4, 0.45)
     mix /= max(1.0, np.abs(mix).max() / 0.95)
     audio = f"{work}/mix.wav"
     with wave.open(audio, "wb") as wf:
@@ -363,7 +474,7 @@ def main(story_path, out_path):
                   ph=rnd.uniform(0, 6.28), a=rnd.randint(30, 85)) for _ in range(30)]
     ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                            "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", audio,
-                           "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
+                           "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p",
                            "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.2f}", "-movflags", "+faststart", out_path],
                           stdin=subprocess.PIPE)
     banner = story.get("banner", "CRAZY FACTS")
