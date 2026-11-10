@@ -1,0 +1,17 @@
+{
+  "title": "On Venus, a Day Is Longer Than a Year 🪐 #shorts",
+  "description": "Venus spins once in about 243 Earth days, but circles the Sun in only about 225. So a day on Venus is longer than its year! It also spins backwards, so the Sun rises in the west, and its surface is about 465°C – hot enough to melt lead.\n\nSources: NASA Science, Britannica\n\n#shorts #facts #crazyfacts #space #didyouknow #venus",
+  "tags": ["facts", "crazy facts", "venus", "space", "planets", "did you know", "shorts"],
+  "comment": "If you could visit one planet, which would it be? 👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "On Venus, one day lasts longer than one year.", "anim": "title", "headline": "VENUS DAY\nIS LONGER\nTHAN ITS YEAR", "emoji": ["🪐", "🤯"]},
+    {"text": "Venus is the second planet from the Sun, and almost the same size as Earth.", "anim": "versus", "sides": [{"emoji": "🌍", "label": "Earth", "value": "12,742 km"}, {"emoji": "🪐", "label": "Venus", "value": "12,104 km"}]},
+    {"text": "It spins incredibly slowly. One full turn takes about 243 Earth days.", "anim": "stat", "to": 243, "suffix": " days", "label": "ONE SPIN OF VENUS", "emoji": ["🌀", "🐢"]},
+    {"text": "But it circles the Sun in only about 225 Earth days.", "anim": "run", "emoji": ["🪐"], "trail": "💨"},
+    {"text": "So Venus finishes a whole year before it finishes a single spin!", "anim": "timeline", "points": [{"year": "225 days", "label": "One year", "emoji": "☀️"}, {"year": "243 days", "label": "One spin", "emoji": "🌀"}]},
+    {"text": "It also spins backwards, so on Venus the Sun rises in the west.", "anim": "zoom", "emoji": ["☀️", "🔄"], "orbit": "✨"},
+    {"text": "And the surface is about 465 degrees Celsius, hot enough to melt lead.", "anim": "shake", "emoji": ["🔥", "🌋"]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
