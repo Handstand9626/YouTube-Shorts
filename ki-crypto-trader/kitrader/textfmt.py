@@ -12,18 +12,23 @@ def de_num(value: float, digits: int = 2) -> str:
     return text.replace(",", "\u0000").replace(".", ",").replace("\u0000", ".")
 
 
+def _minus(text: str) -> str:
+    """Typografisches Minuszeichen fuer Fliesstext (nicht fuer CSV-Zahlen)."""
+    return text.replace("-", "−")
+
+
 def eur(value: float, digits: int = 2) -> str:
-    return f"{de_num(value, digits)} €"
+    return _minus(f"{de_num(value, digits)} €")
 
 
 def signed_eur(value: float, digits: int = 2) -> str:
     sign = "+" if round(value, digits) > 0 else ""
-    return f"{sign}{de_num(value, digits)} €"
+    return _minus(f"{sign}{de_num(value, digits)} €")
 
 
 def pct(value: float, digits: int = 2, signed: bool = True) -> str:
     sign = "+" if signed and round(value, digits) > 0 else ""
-    return f"{sign}{de_num(value, digits)} %"
+    return _minus(f"{sign}{de_num(value, digits)} %")
 
 
 def btc(value: float) -> str:
@@ -31,7 +36,7 @@ def btc(value: float) -> str:
 
 
 def score_text(score: int) -> str:
-    return f"{score:+d}" if score else "0"
+    return _minus(f"{score:+d}") if score else "0"
 
 
 def local_dt(ts: float, with_seconds: bool = True) -> str:

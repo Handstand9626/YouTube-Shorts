@@ -9,6 +9,7 @@ import json
 import mimetypes
 import os
 import threading
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
@@ -105,15 +106,16 @@ def make_handler(engine):
             if path == "/api/report":
                 return self._json(self._report())
 
-            stamp = "test"
-            if path == "/export/bericht.pdf":
+            if path in ("/export/bericht.pdf", "/export/bericht.csv"):
                 report = self._report()
-                return self._download(report_mod.report_pdf(report, storage.get_trades()),
-                                      "application/pdf", f"ki-crypto-trader_bericht_{stamp}.pdf")
-            if path == "/export/bericht.csv":
-                report = self._report()
+                kind = "abschlussbericht" if report["final"] else "zwischenbericht"
+                stamp = datetime.fromtimestamp(report["start_ts"]).strftime("%Y-%m-%d")
+                name = f"ki-crypto-trader_{kind}_{stamp}"
+                if path.endswith(".pdf"):
+                    return self._download(report_mod.report_pdf(report, storage.get_trades()),
+                                          "application/pdf", name + ".pdf")
                 return self._download(report_mod.report_csv(report, storage.get_trades()).encode("utf-8"),
-                                      "text/csv; charset=utf-8", f"ki-crypto-trader_bericht_{stamp}.csv")
+                                      "text/csv; charset=utf-8", name + ".csv")
             if path == "/export/trades.csv":
                 return self._download(report_mod.trades_csv(storage.get_trades()).encode("utf-8"),
                                       "text/csv; charset=utf-8", "ki-crypto-trader_trades.csv")

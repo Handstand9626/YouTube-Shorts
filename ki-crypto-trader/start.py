@@ -24,6 +24,11 @@ if sys.version_info < (3, 8):
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+for _stream in (sys.stdout, sys.stderr):   # Umlaute/Euro-Zeichen duerfen die Ausgabe nie abbrechen
+    try:
+        _stream.reconfigure(errors="replace")
+    except (AttributeError, ValueError):
+        pass
 
 from kitrader.config import ALLOWED_CANDLE_MINUTES, Config  # noqa: E402
 from kitrader.engine import Engine  # noqa: E402

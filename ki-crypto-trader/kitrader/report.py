@@ -12,9 +12,8 @@ import os
 from datetime import datetime
 from typing import List, Optional
 
-from .pdfwriter import GRAY, MARGIN_X, MUTED, PAGE_W, PdfDoc
-from .textfmt import (btc as fmt_btc, de_num, duration_text, eur, local_dt, local_tz_name, pct,
-                      signed_eur)
+from .pdfwriter import GRAY, MARGIN_X, MUTED, PdfDoc
+from .textfmt import de_num, duration_text, eur, local_dt, local_tz_name, pct, signed_eur
 
 DISCLAIMER = ("Paper-Trading-Simulation: Es wurde kein echtes Geld eingesetzt und es wurden keine "
               "echten Kauf- oder Verkaufsaufträge ausgeführt. Kein Hebel, kein Margin, keine Kredite. "
@@ -352,6 +351,12 @@ def equity_csv(points: List[dict]) -> str:
 # PDF
 # ---------------------------------------------------------------------------
 
+def _short_reason(reason: str) -> str:
+    """Kurzform des Handelsgrunds fuer die schmale PDF-Spalte."""
+    reason = reason.split(" (mindestens")[0].split(" (mehrere")[0]
+    return reason.replace("Gesamtbewertung", "Bewertung")
+
+
 def report_pdf(report: dict, trades: List[dict]) -> bytes:
     r = report
     doc = PdfDoc(title=f"KI Crypto Trader – {r['title']}")
@@ -360,8 +365,10 @@ def report_pdf(report: dict, trades: List[dict]) -> bytes:
     doc.y -= 6
     doc.text(MARGIN_X, doc.y, "KI Crypto Trader", 22, bold=True)
     doc.y -= 22
-    doc.text(MARGIN_X, doc.y, f"{r['title']} · BTC/EUR · {duration_text(r['duration_hours'] * 3600)} Test",
-             12, color=GRAY)
+    hours = r["duration_hours"]
+    length = (f"{int(round(hours))}-Stunden-Test" if abs(hours - round(hours)) < 1e-9
+              else f"Probelauf über {duration_text(hours * 3600)}")
+    doc.text(MARGIN_X, doc.y, f"{r['title']} · BTC/EUR · {length}", 12, color=GRAY)
     doc.y -= 16
     doc.text(MARGIN_X, doc.y, "Paper-Trading-Simulation – kein echtes Geld, keine echten Orders",
              10, bold=True, color=GRAY)
@@ -443,10 +450,10 @@ def report_pdf(report: dict, trades: List[dict]) -> bytes:
                 "Kauf" if t["side"] == "BUY" else "Verkauf", de_num(t["price"], 2),
                 de_num(t["invested_eur"], 2), de_num(t["fee_eur"], 4),
                 "" if t["pnl_eur"] is None else signed_eur(t["pnl_eur"], 4).replace(" €", ""),
-                de_num(t["equity_after"], 2), t["reason"]])
+                de_num(t["equity_after"], 2), _short_reason(t["reason"])])
         doc.table(["Nr.", "Zeitpunkt", "Typ", "BTC-Kurs €", "Betrag €", "Gebühr €", "G/V €",
                    "Kontostand €", "Grund"],
-                  rows, widths=[4, 15, 8, 11, 9, 9, 10, 11, 23],
+                  rows, widths=[4, 14, 7, 10, 8, 8, 9, 11, 29],
                   aligns=["r", "l", "l", "r", "r", "r", "r", "r", "l"])
         doc.paragraph("Betrag = investierter Betrag der Position. G/V = Ergebnis des abgeschlossenen "
                       "Trades nach Kauf- und Verkaufsgebühr. Kontostand = freies Guthaben plus "
@@ -488,5 +495,3 @@ def write_report_files(engine, directory: str) -> List[str]:
     return paths
 
 
-__all__ = ["build_report", "evaluate", "summary_rows", "report_csv", "report_pdf", "trades_csv",
-           "decisions_csv", "equity_csv", "write_report_files", "fmt_btc", "PAGE_W"]

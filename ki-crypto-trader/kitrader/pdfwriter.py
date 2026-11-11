@@ -230,8 +230,11 @@ class PdfDoc:
         kids = " ".join(f"{pid} 0 R" for pid in page_ids)
         objects[pages_id - 1] = f"<< /Type /Pages /Kids [{kids}] /Count {len(page_ids)} >>".encode()
         objects[catalog_id - 1] = f"<< /Type /Catalog /Pages {pages_id} 0 R >>".encode()
-        info_id = add(b"<< /Title (" + _escape(self.title) + b") /Author (" + _escape(self.author) +
-                      b") /Producer (KI Crypto Trader) >>")
+        def meta(text: str) -> bytes:   # Metadaten als UTF-16 (Umlaute, Gedankenstrich)
+            return b"<FEFF" + text.encode("utf-16-be").hex().upper().encode("ascii") + b">"
+
+        info_id = add(b"<< /Title " + meta(self.title) + b" /Author " + meta(self.author) +
+                      b" /Producer " + meta("KI Crypto Trader") + b" >>")
 
         out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
         offsets = []
