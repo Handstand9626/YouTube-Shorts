@@ -398,3 +398,11 @@ section { margin-top: 30px; scroll-margin-top: 104px; }
   .log-card, .table-card { border-radius: 12px; }
   .section-head .btn-ghost, .export-row a { font-size: 12.5px; }
 }
+
+/* ---------- Als App auf dem Handy (Vollbild): Kamera-Aussparung und Ränder freihalten ---------- */
+.topbar { padding-top: env(safe-area-inset-top); }
+.topbar-inner, .section-nav, main, .footer { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+.footer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 16px)); }
+@media (min-width: 641px) {
+  .topbar-inner, .section-nav, main, .footer { padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
+}

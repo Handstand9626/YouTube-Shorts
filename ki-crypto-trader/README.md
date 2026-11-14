@@ -88,12 +88,41 @@ Der alte Test wird nicht gelöscht, sondern nach `data/archiv/` verschoben.
 
 ---
 
+## Auf dem Handy
+
+Das Programm läuft auf dem Computer, das Handy zeigt das Dashboard als App an.
+
+1. Auf dem Computer starten mit:
+
+   ```
+   python start.py --handy
+   ```
+
+2. Im Terminal steht eine Zeile wie `Am Handy : http://192.168.178.23:8000`.
+3. Handy ins **selbe WLAN** wie den Computer bringen.
+4. Diese Adresse im Handy-Browser öffnen.
+5. Als App ablegen:
+   - **iPhone (Safari):** Teilen-Symbol → „Zum Home-Bildschirm“.
+   - **Android (Chrome):** Menü ⋮ → „App installieren“ bzw. „Zum Startbildschirm hinzufügen“.
+
+Danach startet das Dashboard über das Symbol „KI Trader“ im Vollbild und aktualisiert sich
+alle 2 Sekunden. Die App zeigt nur an; der Test selbst läuft weiter auf dem Computer.
+
+Hinweise:
+
+- Fragt die Windows-Firewall beim Start nach, für **private Netzwerke** erlauben.
+- Jeder im selben WLAN kann das Dashboard ansehen (nur lesen). In fremden oder öffentlichen
+  WLANs `--handy` nicht verwenden.
+- Unterwegs (mobile Daten) ist das Dashboard nicht erreichbar, nur im eigenen WLAN.
+
+---
+
 ## Nützliche Optionen
 
 | Befehl | Wirkung |
 |---|---|
 | `python start.py --port 8080` | anderes Port für das Dashboard |
-| `python start.py --host 0.0.0.0` | Dashboard auch vom Smartphone im selben WLAN erreichbar (`http://IP-des-Rechners:8000`) |
+| `python start.py --handy` | Dashboard fürs Handy im eigenen WLAN freigeben, Adresse wird angezeigt |
 | `python start.py --intervall 120` | Markt alle 120 statt 60 Sekunden prüfen (erlaubt: 60–300) |
 | `python start.py --kerze 15` | 15-Minuten-Kerzen statt Stundenkerzen (mehr Trades, mehr Gebühren) |
 | `python start.py --dauer-stunden 0.1 --daten probe` | 6-Minuten-Probelauf in einem eigenen Ordner, um alles einmal bis zum Abschlussbericht zu sehen |

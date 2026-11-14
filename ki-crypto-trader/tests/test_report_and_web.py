@@ -149,6 +149,19 @@ class WebServerTests(unittest.TestCase):
             self.assertEqual(status, 200, path)
             self.assertIn(marker, body.lower(), path)
 
+    def test_phone_app_files_are_served(self):
+        status, headers, body = self.get("/manifest.webmanifest")
+        manifest = json.loads(body)
+        self.assertIn("application/manifest+json", headers["Content-Type"])
+        self.assertEqual(manifest["display"], "standalone")
+        for icon in manifest["icons"] + [{"src": "/apple-touch-icon.png"}]:
+            status, headers, body = self.get(icon["src"])
+            self.assertEqual(headers["Content-Type"], "image/png")
+            self.assertTrue(body.startswith(b"\x89PNG"))
+        page = self.get("/")[2]
+        self.assertIn(b'rel="manifest"', page)
+        self.assertIn(b"viewport-fit=cover", page)
+
     def test_state_endpoint(self):
         status, headers, body = self.get("/api/state")
         state = json.loads(body)

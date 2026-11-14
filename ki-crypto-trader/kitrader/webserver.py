@@ -18,7 +18,10 @@ from . import report as report_mod
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
 STATIC_FILES = {"/": "index.html", "/index.html": "index.html", "/styles.css": "styles.css",
-                "/app.js": "app.js", "/charts.js": "charts.js", "/favicon.svg": "favicon.svg"}
+                "/app.js": "app.js", "/charts.js": "charts.js", "/favicon.svg": "favicon.svg",
+                "/manifest.webmanifest": "manifest.webmanifest", "/icon-192.png": "icon-192.png",
+                "/icon-512.png": "icon-512.png", "/apple-touch-icon.png": "apple-touch-icon.png"}
+CONTENT_TYPES = {".webmanifest": "application/manifest+json; charset=utf-8"}
 
 
 def _int(query: dict, name: str, default: Optional[int] = None) -> Optional[int]:
@@ -135,9 +138,11 @@ def make_handler(engine):
                     body = handle.read()
             except OSError:
                 return self._json({"error": "Datei fehlt"}, 404)
-            ctype = mimetypes.guess_type(name)[0] or "application/octet-stream"
-            if ctype.startswith("text/") or ctype in ("application/javascript", "image/svg+xml"):
-                ctype += "; charset=utf-8"
+            ctype = CONTENT_TYPES.get(os.path.splitext(name)[1])
+            if ctype is None:
+                ctype = mimetypes.guess_type(name)[0] or "application/octet-stream"
+                if ctype.startswith("text/") or ctype in ("application/javascript", "image/svg+xml"):
+                    ctype += "; charset=utf-8"
             self._send(200, body, ctype)
 
     return Handler

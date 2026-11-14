@@ -13,6 +13,7 @@ import argparse
 import os
 import shutil
 import signal
+import socket
 import sys
 import threading
 import time
@@ -59,7 +60,24 @@ def parse_args(argv=None):
                         help="Ordner für Datenbank und Berichte (Standard: ./data)")
     parser.add_argument("--kein-browser", action="store_true",
                         help="Dashboard nicht automatisch im Browser öffnen")
-    return parser.parse_args(argv)
+    parser.add_argument("--handy", action="store_true",
+                        help="Dashboard im eigenen WLAN fürs Handy freigeben und die Adresse "
+                             "anzeigen (entspricht --host 0.0.0.0)")
+    args = parser.parse_args(argv)
+    if args.handy:
+        args.host = "0.0.0.0"
+    return args
+
+
+def lan_address():
+    """IP-Adresse dieses Rechners im eigenen Netz (es wird dabei nichts gesendet)."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("10.255.255.255", 1))
+            address = probe.getsockname()[0]
+    except OSError:
+        return None
+    return None if address.startswith("127.") else address
 
 
 def archive_existing(data_dir: str) -> str:
@@ -138,7 +156,15 @@ def main(argv=None) -> int:
           f"{engine.cfg.candle_minutes}-Minuten-Kerzen")
     print(f" Dashboard    : {url}")
     if args.host == "0.0.0.0":
-        print("                (im WLAN: http://<IP-Adresse-dieses-Rechners>:%d)" % server.port)
+        address = lan_address()
+        if address:
+            print(f" Am Handy     : http://{address}:{server.port}")
+            print("                (Handy im selben WLAN, Adresse im Handy-Browser öffnen,")
+            print("                 dann „Zum Startbildschirm hinzufügen“)")
+        else:
+            print(f" Am Handy     : http://<IP-Adresse-dieses-Rechners>:{server.port}")
+        print("                Hinweis: Jeder im selben WLAN kann das Dashboard ansehen")
+        print("                (nur lesen, Änderungen sind nicht möglich).")
     if engine.resumed and test["status"] == "running" and (
             cfg.poll_seconds != engine.cfg.poll_seconds or cfg.candle_minutes != engine.cfg.candle_minutes
             or abs(cfg.duration_hours - engine.cfg.duration_hours) > 1e-9):
