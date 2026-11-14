@@ -106,6 +106,8 @@ Einstellungen gelten für einen neuen Test. Ein laufender Test behält seine Ein
 
 ## Das Dashboard
 
+![Dashboard am Computer](docs/dashboard-desktop.png)
+
 | Bereich | Inhalt |
 |---|---|
 | **Kontostand** | Startkapital, aktueller Kontostand, Gewinn/Verlust in € und %, Wert des virtuellen BTC-Bestands, verfügbares Guthaben, Countdown |
