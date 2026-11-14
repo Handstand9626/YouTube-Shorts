@@ -33,7 +33,7 @@ for _stream in (sys.stdout, sys.stderr):   # Umlaute/Euro-Zeichen duerfen die Au
 from kitrader.config import ALLOWED_CANDLE_MINUTES, Config  # noqa: E402
 from kitrader.engine import Engine  # noqa: E402
 from kitrader.storage import Storage  # noqa: E402
-from kitrader.textfmt import duration_text, eur, local_dt  # noqa: E402
+from kitrader.textfmt import eur, local_dt  # noqa: E402
 from kitrader.webserver import DashboardServer  # noqa: E402
 
 
@@ -133,7 +133,7 @@ def main(argv=None) -> int:
     print(f" Startkapital : {eur(engine.cfg.start_capital_eur)} (virtuell)")
     print(f" Teststart    : {local_dt(test['start_ts'])}")
     print(f" Testende     : {local_dt(test['end_ts'])}  "
-          f"(Dauer {duration_text(engine.cfg.duration_seconds)})")
+          f"(Dauer {engine._duration_label()})")
     print(f" Marktprüfung : alle {engine.cfg.poll_seconds} Sekunden, "
           f"{engine.cfg.candle_minutes}-Minuten-Kerzen")
     print(f" Dashboard    : {url}")

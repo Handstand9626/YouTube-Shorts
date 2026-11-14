@@ -67,7 +67,7 @@ class BuildSnapshotTests(unittest.TestCase):
     def test_large_recent_gap_is_rejected(self):
         candles = make_candles(200, END)
         del candles[150:160]
-        with self.assertRaisesRegex(MarketDataError, "Luecke"):
+        with self.assertRaisesRegex(MarketDataError, "Lücke"):
             snapshot(candles)
 
 

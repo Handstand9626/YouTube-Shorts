@@ -649,9 +649,8 @@ class Engine:
                       "reason": "Die Testdauer ist abgelaufen."}
             elif rt.get("outage_since"):
                 ai = {"code": "PAUSED", "text": "Pausiert", "active": False,
-                      "reason": "Keine gültigen Kursdaten seit " +
-                                duration_text(now - rt["outage_since"]) + ". " +
-                                (rt.get("last_error") or "")}
+                      "reason": "Seit " + duration_text(now - rt["outage_since"]) +
+                                " keine gültigen Kursdaten: " + (rt.get("last_error") or "")}
             elif not rt.get("analyses"):
                 ai = {"code": "STARTING", "text": "Startet", "active": True,
                       "reason": "Die erste Marktanalyse läuft."}

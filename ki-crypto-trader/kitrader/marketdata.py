@@ -82,11 +82,11 @@ def http_get_json(url: str, timeout: float = 10.0) -> Tuple[object, Optional[flo
         reason = getattr(exc, "reason", exc)
         raise MarketDataError(f"Verbindung fehlgeschlagen ({reason})") from exc
     if len(raw) > MAX_RESPONSE_BYTES:
-        raise MarketDataError("Antwort zu gross")
+        raise MarketDataError("Antwort zu groß")
     try:
         data = json.loads(raw.decode("utf-8"))
     except (ValueError, UnicodeDecodeError) as exc:
-        raise MarketDataError("Antwort ist kein gueltiges JSON") from exc
+        raise MarketDataError("Antwort ist kein gültiges JSON") from exc
     server_ts = None
     if date_header:
         try:
@@ -191,7 +191,7 @@ def build_snapshot(source: str, raw_candles: List[Candle], ticker: Dict[str, flo
         missing = (candle.t - filled[-1].t) // step - 1
         if missing > MAX_FILLABLE_GAP:
             if len(ordered) - index <= MIN_CLOSED_CANDLES + 5:
-                raise MarketDataError(f"Luecke von {missing} Kerzen in den Kursdaten")
+                raise MarketDataError(f"Lücke von {missing} Kerzen in den Kursdaten")
             filled = []  # alte Luecke ausserhalb des benoetigten Fensters: neu beginnen
             gaps = 0
         elif missing > 0:
@@ -215,20 +215,20 @@ def build_snapshot(source: str, raw_candles: List[Candle], ticker: Dict[str, flo
     try:
         price, bid, ask = float(ticker["price"]), float(ticker["bid"]), float(ticker["ask"])
     except (KeyError, TypeError, ValueError) as exc:
-        raise MarketDataError("Ticker unvollstaendig") from exc
+        raise MarketDataError("Ticker unvollständig") from exc
     if not (price > 0 and bid > 0 and ask > 0):
         raise MarketDataError("Ticker unplausibel (Kurs <= 0)")
     if bid > ask * 1.0005:
-        raise MarketDataError("Ticker unplausibel (Geldkurs ueber Briefkurs)")
+        raise MarketDataError("Ticker unplausibel (Geldkurs über Briefkurs)")
     spread_pct = (ask - bid) / price * 100.0
     if spread_pct > MAX_TICKER_SPREAD_PCT:
         raise MarketDataError(f"Ticker unplausibel (Spread {spread_pct:.2f} %)")
     if not (bid * 0.995 <= price <= ask * 1.005):
-        raise MarketDataError("Ticker unplausibel (letzter Kurs weit ausserhalb des Orderbuchs)")
+        raise MarketDataError("Ticker unplausibel (letzter Kurs weit außerhalb des Orderbuchs)")
     deviation = abs(price / closed[-1].c - 1.0) * 100.0
     if deviation > MAX_PRICE_VS_CANDLE_PCT:
         raise MarketDataError(
-            f"Kurssprung unplausibel ({deviation:.1f} % gegenueber der letzten Kerze)")
+            f"Kurssprung unplausibel ({deviation:.1f} % gegenüber der letzten Kerze)")
 
     return MarketSnapshot(source=source, fetched_ts=fetched_ts, price=price, bid=bid, ask=ask,
                           candles=closed, live=live, candle_minutes=candle_minutes,
@@ -255,7 +255,7 @@ class MarketDataClient:
                 return self._fetch_from(source, candle_minutes)
             except MarketDataError as exc:
                 errors.append(f"{source.name}: {exc}")
-        raise MarketDataError("Keine Datenquelle lieferte gueltige Kursdaten – " + " | ".join(errors))
+        raise MarketDataError("Keine Datenquelle lieferte gültige Kursdaten – " + " | ".join(errors))
 
     def _fetch_from(self, source, candle_minutes: int) -> MarketSnapshot:
         started = self.clock()
