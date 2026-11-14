@@ -1,0 +1,23 @@
+{
+  "name": "ei-alarm",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "EiAlarm": {
+        "$path": "src/ReplicatedStorage/EiAlarm"
+      }
+    },
+    "ServerScriptService": {
+      "EiAlarm": {
+        "$path": "src/ServerScriptService/EiAlarm"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "EiAlarmClient": {
+          "$path": "src/StarterPlayerScripts/EiAlarmClient.client.luau"
+        }
+      }
+    }
+  }
+}
