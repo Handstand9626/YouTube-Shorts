@@ -19,3 +19,7 @@ mkdir -p voices && curl -sL https://github.com/rhasspy/piper/releases/download/v
 ```bash
 python3 make_short.py stories/2026-11-09-emu-war.json videos/2026-11-09-emu-war.mp4
 ```
+
+## KI Crypto Trader
+
+Separate project in [`ki-crypto-trader/`](ki-crypto-trader/README.md): a 72-hour BTC/EUR paper-trading test with a live dashboard (simulation only, no real money or orders).
