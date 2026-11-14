@@ -1,0 +1,17 @@
+{
+  "title": "Octopuses Have 3 Hearts and Blue Blood 🐙 #shorts",
+  "description": "An octopus has three hearts: two pump blood through the gills and one sends it around the body. Its blood is blue because it carries oxygen with copper instead of iron. When it swims, the main heart stops beating – and most of its roughly 500 million neurons sit in its arms.\n\nSources: Smithsonian Magazine, Live Science, PBS Nature, Okinawa Institute of Science and Technology (OIST), Harvard Gazette\n\n#shorts #facts #crazyfacts #animals #didyouknow #octopus",
+  "tags": ["facts", "crazy facts", "octopus", "animals", "ocean", "did you know", "shorts"],
+  "comment": "Three hearts or eight arms – which octopus superpower would you pick? 👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "An octopus has three hearts, and its blood is blue.", "anim": "title", "headline": "3 HEARTS\nAND\nBLUE BLOOD", "emoji": ["🐙", "🤯"]},
+    {"text": "Octopuses live in oceans all over the world, and their bodies work nothing like ours.", "anim": "pop", "emoji": ["🌊", "🐙", "🌍"]},
+    {"text": "Two of the hearts pump blood through the gills. The third one sends it around the body.", "anim": "stat", "to": 3, "suffix": " hearts", "label": "ONE OCTOPUS", "emoji": ["💙", "🐙"]},
+    {"text": "The blood is blue because it carries oxygen with copper, not with iron like ours.", "anim": "versus", "sides": [{"emoji": "🩸", "label": "Human", "value": "Iron = red"}, {"emoji": "💧", "label": "Octopus", "value": "Copper = blue"}]},
+    {"text": "And here is the strange part. When an octopus swims, its main heart stops beating!", "anim": "shake", "emoji": ["💔", "🐙"]},
+    {"text": "That is why octopuses usually crawl instead of swim. Swimming wears them out.", "anim": "run", "emoji": ["🐙"], "trail": "🫧"},
+    {"text": "An octopus also has about 500 million neurons, and most of them are in its arms.", "anim": "count", "to": 500, "label": "MILLION NEURONS", "emoji": ["🧠"], "under": "🌊"},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
