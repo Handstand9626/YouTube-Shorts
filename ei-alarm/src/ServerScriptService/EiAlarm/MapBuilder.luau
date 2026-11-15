@@ -61,28 +61,90 @@ local function sound(parent, name, spec)
 	}, parent)
 end
 
-local COLOR_FLOOR = Color3.fromRGB(196, 202, 210)
-local COLOR_WALL = Color3.fromRGB(232, 236, 240)
+local COLOR_FLOOR = Color3.fromRGB(214, 220, 228)
+local COLOR_TILE = Color3.fromRGB(176, 184, 196)
+local COLOR_WALL = Color3.fromRGB(236, 240, 245)
+local COLOR_TRIM = Color3.fromRGB(60, 190, 200)
 local COLOR_VENT = Color3.fromRGB(110, 118, 128)
 local COLOR_METAL = Color3.fromRGB(70, 76, 86)
+local COLOR_CREAM = Color3.fromRGB(250, 240, 200)
 local COLOR_LAMP_OFF = Color3.fromRGB(90, 20, 20)
+local TANK_COLORS = {
+	Color3.fromRGB(120, 255, 140),
+	Color3.fromRGB(255, 120, 200),
+	Color3.fromRGB(120, 220, 255),
+	Color3.fromRGB(255, 220, 90),
+}
 
-local function buildSide(geometry, side, M)
+local UPRIGHT = CFrame.Angles(0, 0, math.rad(90))
+local ALONG_Z = CFrame.Angles(0, math.rad(90), 0)
+
+-- Stehender Zylinder. cframe ist die Mitte.
+local function cylinder(parent, name, diameter, height, cframe, color, material)
+	local part = block(parent, name, Vector3.new(height, diameter, diameter), cframe * UPRIGHT, color, material)
+	part.Shape = Enum.PartType.Cylinder
+	return part
+end
+
+-- Liegender Zylinder entlang der lokalen X-Achse.
+local function pipe(parent, name, diameter, length, cframe, color, material)
+	local part = block(parent, name, Vector3.new(length, diameter, diameter), cframe, color, material)
+	part.Shape = Enum.PartType.Cylinder
+	return part
+end
+
+local function ball(parent, name, diameter, cframe, color, material)
+	local part = block(parent, name, Vector3.new(diameter, diameter, diameter), cframe, color, material)
+	part.Shape = Enum.PartType.Ball
+	return part
+end
+
+-- Deko steht niemandem im Weg.
+local function ghost(part)
+	part.CanCollide = false
+	return part
+end
+
+-- Helles, leicht dunstiges Laborlicht mit sanftem Leuchten um Neonteile.
+local function setupLighting()
+	local Lighting = game:GetService("Lighting")
+	Lighting.ClockTime = 14.5
+	Lighting.Brightness = 2.2
+	Lighting.Ambient = Color3.fromRGB(110, 115, 130)
+	Lighting.OutdoorAmbient = Color3.fromRGB(140, 145, 160)
+	local function ensure(className, props)
+		local effect = Lighting:FindFirstChildOfClass(className) or Instance.new(className)
+		for key, value in pairs(props) do
+			effect[key] = value
+		end
+		effect.Parent = Lighting
+	end
+	ensure("Atmosphere", { Density = 0.28, Offset = 0.2, Haze = 1.2, Color = Color3.fromRGB(200, 215, 235) })
+	ensure("BloomEffect", { Intensity = 0.6, Size = 20, Threshold = 1.4 })
+	ensure("ColorCorrectionEffect", { Saturation = 0.18, Contrast = 0.06 })
+end
+
+local function buildSide(geometry, decor, side, sideIndex, M)
 	local wallZ = M.HallHalf + M.WallThickness / 2
 	local innerHalf = M.HallHalf + M.WallThickness
 	local outerHalf = innerHalf + M.VentWidth + M.WallThickness
 	local doorHalf = M.DoorWidth / 2
 	local segment = innerHalf - doorHalf
+	local faceZ = M.HallHalf - 0.2
 
 	-- Hallenwand mit Tuer zur Lueftung
 	for _, sign in ipairs({ -1, 1 }) do
+		local x = sign * (doorHalf + segment / 2)
 		block(
 			geometry,
 			"HallWall",
 			Vector3.new(segment, M.HallWallHeight, M.WallThickness),
-			side * CFrame.new(sign * (doorHalf + segment / 2), M.HallWallHeight / 2, wallZ),
+			side * CFrame.new(x, M.HallWallHeight / 2, wallZ),
 			COLOR_WALL
 		)
+		ghost(block(decor, "WallBand", Vector3.new(segment - 2, 2, 0.3), side * CFrame.new(x - sign, 1, faceZ), COLOR_TRIM))
+		-- Tuerrahmen
+		ghost(cylinder(decor, "DoorPost", 1.2, M.VentHeight, side * CFrame.new(sign * (doorHalf + 0.3), M.VentHeight / 2, faceZ), COLOR_METAL, Enum.Material.Metal))
 	end
 	local lintelHeight = M.HallWallHeight - M.VentHeight
 	block(
@@ -92,6 +154,31 @@ local function buildSide(geometry, side, M)
 		side * CFrame.new(0, M.VentHeight + lintelHeight / 2, wallZ),
 		COLOR_WALL
 	)
+	ghost(pipe(decor, "DoorGlow", 0.5, M.DoorWidth + 1.8, side * CFrame.new(0, M.VentHeight + 0.3, faceZ), COLOR_TRIM, Enum.Material.Neon))
+
+	-- Runde Wandsaeulen und Leuchtband unter der Mauerkrone
+	for _, x in ipairs({ -50, -30, -12, 12, 30, 50 }) do
+		ghost(cylinder(decor, "Pillar", 2.4, M.HallWallHeight, side * CFrame.new(x, M.HallWallHeight / 2, faceZ), COLOR_WALL))
+		ghost(ball(decor, "PillarCap", 2.8, side * CFrame.new(x, M.HallWallHeight, faceZ), COLOR_TRIM))
+	end
+	ghost(pipe(decor, "WallGlow", 0.4, M.HallHalf * 2, side * CFrame.new(0, M.HallWallHeight - 1, faceZ), COLOR_TRIM, Enum.Material.Neon))
+
+	-- Brodelnder Tank in der Hallenecke mit Rohr an der Wand
+	local corner = side * CFrame.new(M.HallHalf - 8, 0, M.HallHalf - 8)
+	local liquid = TANK_COLORS[(sideIndex - 1) % #TANK_COLORS + 1]
+	cylinder(decor, "TankBase", 9, 1, corner * CFrame.new(0, 0.5, 0), COLOR_METAL, Enum.Material.Metal)
+	local glass = cylinder(decor, "TankGlass", 8, 10, corner * CFrame.new(0, 6, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass)
+	glass.Transparency = 0.6
+	local fill = ghost(cylinder(decor, "TankLiquid", 7, 7, corner * CFrame.new(0, 4.5, 0), liquid, Enum.Material.Neon))
+	fill.Transparency = 0.25
+	make("PointLight", { Color = liquid, Range = 22, Brightness = 1.2, Shadows = false }, fill)
+	for index, offset in ipairs({ { -1.5, 2.5, 1 }, { 1.2, 4.5, -1.4 }, { 0.4, 6.5, 1.6 } }) do
+		ghost(ball(decor, "Bubble" .. index, 1.1, corner * CFrame.new(offset[1], offset[2], offset[3]), Color3.fromRGB(255, 255, 255), Enum.Material.Neon))
+	end
+	ghost(cylinder(decor, "TankCap", 9, 1, corner * CFrame.new(0, 11.5, 0), COLOR_METAL, Enum.Material.Metal))
+	ghost(cylinder(decor, "TankRiser", 1.2, 2, corner * CFrame.new(0, 13, 0), COLOR_METAL, Enum.Material.Metal))
+	ghost(pipe(decor, "TankElbow", 1.2, 7, corner * CFrame.new(0, 13.6, 3.5) * ALONG_Z, COLOR_METAL, Enum.Material.Metal))
+	ghost(pipe(decor, "TankPipe", 1.2, 40, side * CFrame.new(M.HallHalf - 28, 13.6, M.HallHalf - 1), COLOR_METAL, Enum.Material.Metal))
 
 	-- Lueftung: Aussenwand, Decke, Lichter
 	block(
@@ -112,15 +199,15 @@ local function buildSide(geometry, side, M)
 		Enum.Material.Metal
 	)
 	for _, x in ipairs({ -ventZ, -ventZ / 2, 0, ventZ / 2 }) do
-		local lamp = block(
+		local lamp = ghost(pipe(
 			geometry,
 			"VentLight",
-			Vector3.new(2, 0.2, 0.6),
-			side * CFrame.new(x, M.VentHeight - 0.1, ventZ),
+			0.6,
+			3,
+			side * CFrame.new(x, M.VentHeight - 0.3, ventZ),
 			Color3.fromRGB(150, 230, 255),
 			Enum.Material.Neon
-		)
-		lamp.CanCollide = false
+		))
 		make("PointLight", { Range = 18, Brightness = 0.9, Shadows = false }, lamp)
 	end
 end
@@ -134,28 +221,39 @@ local function buildBase(root, baseId, side, config)
 	model:SetAttribute("Alarm", false)
 
 	block(model, "Plate", Vector3.new(30, 0.2, 26), origin * CFrame.new(0, 0.1, 0), color)
+	-- Runde Eckpfosten mit Kugelkopf
+	for _, x in ipairs({ -15, 15 }) do
+		for _, z in ipairs({ -13, 13 }) do
+			ghost(cylinder(model, "Post", 1.4, 3, origin * CFrame.new(x, 1.5, z), COLOR_WALL))
+			ghost(ball(model, "PostCap", 2, origin * CFrame.new(x, 3.4, z), color, Enum.Material.Neon))
+		end
+	end
 
-	-- Brutstationen: drei Slots in einer Reihe vor der Lueftungstuer
+	-- Brutstationen: drei Slots in einer Reihe vor der Lueftungstuer.
+	-- Der Slot selbst ist ein unsichtbarer Quader (Kollision, Prompt, Ei-Position),
+	-- sichtbar ist die runde Brutmaschine mit Glaskuppel darum herum.
 	local slots, slotPrompts = {}, {}
 	for slot = 1, config.SlotsPerBase do
-		local part = block(
-			model,
-			"Slot" .. slot,
-			Vector3.new(4, 1, 4),
-			origin * CFrame.new((slot - 2) * 8, 0.6, 8),
-			COLOR_METAL,
-			Enum.Material.Metal
-		)
+		local center = origin * CFrame.new((slot - 2) * 8, 0.6, 8)
+		local part = block(model, "Slot" .. slot, Vector3.new(4, 1, 4), center, COLOR_METAL, Enum.Material.Metal)
+		part.Transparency = 1
 		part:SetAttribute("PromptOn", false)
 		slots[slot] = part
 		slotPrompts[slot] = prompt(part, "Ei einsetzen", "Brutstation", config)
+
+		ghost(cylinder(model, "IncubatorBase", 4.6, 1, center, COLOR_METAL, Enum.Material.Metal))
+		ghost(cylinder(model, "IncubatorRing", 5.2, 0.2, center * CFrame.new(0, -0.3, 0), color, Enum.Material.Neon))
+		local dome = ghost(ball(model, "IncubatorDome", 4.6, center * CFrame.new(0, 2.1, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass))
+		dome.Transparency = 0.75
 	end
 
 	-- Stellplaetze fuer geschluepfte Kreaturen, Blick zur Hallenmitte
 	local pads = {}
 	for row = 0, 1 do
 		for column = 0, 3 do
-			pads[#pads + 1] = origin * CFrame.new(-10.5 + column * 7, 0.2, -3 - row * 6)
+			local pad = origin * CFrame.new(-10.5 + column * 7, 0.2, -3 - row * 6)
+			pads[#pads + 1] = pad
+			ghost(cylinder(model, "PadMark", 4.5, 0.1, pad * CFrame.new(0, 0.05, 0), COLOR_WALL))
 		end
 	end
 
@@ -166,17 +264,17 @@ local function buildBase(root, baseId, side, config)
 		CFrame = origin * CFrame.new(0, 0.4, 1),
 		Color = color,
 		Material = Enum.Material.SmoothPlastic,
-		Transparency = 0.5,
+		Transparency = 1,
 		Anchored = true,
 		Neutral = true,
 		Duration = 0,
 		TopSurface = Enum.SurfaceType.Smooth,
 	}, model)
+	ghost(cylinder(model, "SpawnMark", 6, 0.1, origin * CFrame.new(0, 0.62, 1), COLOR_CREAM, Enum.Material.Neon))
 
 	-- Alarmlampe auf einem Mast, Schild ueber der Lueftungstuer
-	block(model, "LampPole", Vector3.new(0.6, 9, 0.6), origin * CFrame.new(-13, 4.5, 11), COLOR_METAL, Enum.Material.Metal)
-	local lamp = block(model, "AlarmLamp", Vector3.new(2, 2, 2), origin * CFrame.new(-13, 10, 11), COLOR_LAMP_OFF)
-	lamp.Shape = Enum.PartType.Ball
+	cylinder(model, "LampPole", 0.7, 9, origin * CFrame.new(-13, 4.5, 11), COLOR_METAL, Enum.Material.Metal)
+	local lamp = ball(model, "AlarmLamp", 2, origin * CFrame.new(-13, 10, 11), COLOR_LAMP_OFF)
 	lamp.CanCollide = false
 	local light = make("PointLight", { Color = Color3.fromRGB(255, 40, 40), Range = 40, Brightness = 3, Enabled = false }, lamp)
 	local alarmSound = sound(lamp, "Alarm", config.Sounds.Alarm)
@@ -225,38 +323,56 @@ function MapBuilder.build(config)
 	if previous then
 		previous:Destroy()
 	end
+	setupLighting()
 
 	local root = make("Folder", { Name = "EiAlarm" }, workspace)
+	-- Map: alles, was Sicht und Abfangen blockiert. Decor: reine Zierde.
 	local geometry = make("Folder", { Name = "Map" }, root)
+	local decor = make("Folder", { Name = "Decor" }, root)
 	local eggFolder = make("Folder", { Name = "Eggs" }, root)
 	local creatureFolder = make("Folder", { Name = "Creatures" }, root)
 
 	local outerHalf = M.HallHalf + M.WallThickness * 2 + M.VentWidth
 	block(geometry, "Floor", Vector3.new(outerHalf * 2, 1, outerHalf * 2), CFrame.new(0, -0.5, 0), COLOR_FLOOR)
+	-- Fliesenfugen, Leuchtring um die Mitte
+	for offset = -48, 48, 12 do
+		ghost(block(decor, "TileLine", Vector3.new(M.HallHalf * 2, 0.04, 0.3), CFrame.new(0, 0.02, offset), COLOR_TILE))
+		ghost(block(decor, "TileLine", Vector3.new(0.3, 0.04, M.HallHalf * 2), CFrame.new(offset, 0.02, 0), COLOR_TILE))
+	end
+	ghost(cylinder(decor, "CenterGlow", 44, 0.1, CFrame.new(0, 0.05, 0), COLOR_TRIM, Enum.Material.Neon))
+	ghost(cylinder(decor, "CenterDisc", 42, 0.12, CFrame.new(0, 0.07, 0), COLOR_CREAM))
 
 	local bases = {}
 	for baseId = 1, config.MaxBases do
 		local side = CFrame.Angles(0, math.rad(90 * (baseId - 1)), 0)
-		buildSide(geometry, side, M)
+		buildSide(geometry, decor, side, baseId, M)
 		bases[baseId] = buildBase(root, baseId, side, config)
+		-- Farbiger Weg von der Mitte zur Basis
+		local from, to = 21, M.BaseDistance - 13
+		ghost(block(decor, "Path", Vector3.new(6, 0.1, to - from), side * CFrame.new(0, 0.06, (from + to) / 2), rgb(M.BaseColors[baseId])))
 	end
 
-	-- Zentrale Eierstation
+	-- Zentrale Eierstation: runde Plattform, runde Sockel, Leuchtsaeule.
+	-- Die Sockel selbst sind unsichtbare Quader, die Eier richten sich daran aus.
 	local station = make("Model", { Name = "EggStation" }, root)
-	block(station, "Platform", Vector3.new(16, 0.4, 16), CFrame.new(0, 0.2, 0), Color3.fromRGB(250, 240, 200))
+	cylinder(station, "Platform", 18, 0.4, CFrame.new(0, 0.2, 0), Color3.fromRGB(255, 250, 235))
 	local pedestals = {}
 	local corners = { { -4, -4 }, { 4, -4 }, { 4, 4 }, { -4, 4 } }
 	for index = 1, config.CenterPedestals do
 		local corner = corners[(index - 1) % #corners + 1]
-		pedestals[index] = block(
-			station,
-			"Pedestal" .. index,
-			Vector3.new(3, 2, 3),
-			CFrame.new(corner[1], 1.4, corner[2]),
-			COLOR_METAL,
-			Enum.Material.Metal
-		)
+		local center = CFrame.new(corner[1], 1.4, corner[2])
+		local pedestal = block(station, "Pedestal" .. index, Vector3.new(3, 2, 3), center, COLOR_METAL, Enum.Material.Metal)
+		pedestal.Transparency = 1
+		pedestals[index] = pedestal
+		ghost(cylinder(station, "PedestalBody", 3, 2, center, COLOR_METAL, Enum.Material.Metal))
+		ghost(cylinder(station, "PedestalRing", 3.8, 0.2, center * CFrame.new(0, -0.9, 0), COLOR_TRIM, Enum.Material.Neon))
 	end
+	cylinder(station, "ColumnBase", 3, 1.5, CFrame.new(0, 1.15, 0), COLOR_METAL, Enum.Material.Metal)
+	local tube = ghost(cylinder(station, "ColumnGlass", 2.4, 8, CFrame.new(0, 5.9, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass))
+	tube.Transparency = 0.5
+	local core = ghost(ball(station, "ColumnCore", 1.8, CFrame.new(0, 6, 0), Color3.fromRGB(255, 230, 120), Enum.Material.Neon))
+	make("PointLight", { Color = Color3.fromRGB(255, 230, 150), Range = 30, Brightness = 1.5, Shadows = false }, core)
+	ghost(cylinder(station, "ColumnCap", 3, 0.6, CFrame.new(0, 10.2, 0), COLOR_METAL, Enum.Material.Metal))
 
 	return {
 		root = root,
@@ -333,60 +449,63 @@ function MapBuilder.buildHatchBurst(config, position)
 	return part
 end
 
--- Platzhalter-Kreaturen. Vorne ist -Z, der Drehpunkt liegt am Boden.
+-- Platzhalter-Kreaturen aus runden Grundformen. Vorne ist -Z, der Drehpunkt liegt am Boden.
 local creatureBuilders = {}
-
-local function creaturePart(model, name, size, offset, color, shape)
-	local part = block(model, name, size, CFrame.new(offset), color)
-	part.CanCollide = false
-	if shape then
-		part.Shape = shape
-	end
-	return part
-end
 
 local function addEyes(model, y, z, spread)
 	for _, sign in ipairs({ -1, 1 }) do
-		creaturePart(model, "Eye", Vector3.new(0.5, 0.5, 0.5), Vector3.new(sign * spread, y, z), Color3.fromRGB(20, 20, 25), Enum.PartType.Ball)
+		ghost(ball(model, "EyeWhite", 0.8, CFrame.new(sign * spread, y, z), Color3.fromRGB(255, 255, 255)))
+		ghost(ball(model, "Pupil", 0.4, CFrame.new(sign * spread, y, z - 0.3), Color3.fromRGB(20, 20, 25)))
 	end
 end
 
 creatureBuilders["Waffelkrabbe"] = function(model)
 	local waffle = Color3.fromRGB(222, 170, 90)
-	local body = creaturePart(model, "Body", Vector3.new(3.2, 1, 2.6), Vector3.new(0, 1, 0), waffle)
-	creaturePart(model, "Syrup", Vector3.new(2.4, 0.2, 1.8), Vector3.new(0, 1.6, 0), Color3.fromRGB(150, 80, 30))
+	local red = Color3.fromRGB(235, 90, 70)
+	local body = ghost(cylinder(model, "Body", 3.4, 0.9, CFrame.new(0, 1.1, 0), waffle))
+	ghost(cylinder(model, "Syrup", 2.4, 0.2, CFrame.new(0, 1.6, 0), Color3.fromRGB(150, 80, 30)))
+	ghost(ball(model, "Butter", 0.8, CFrame.new(0.3, 1.8, 0.2), Color3.fromRGB(255, 235, 140)))
 	for _, sign in ipairs({ -1, 1 }) do
-		creaturePart(model, "Claw", Vector3.new(1.2, 1.2, 1.2), Vector3.new(sign * 2.3, 1.3, -0.8), Color3.fromRGB(235, 90, 70), Enum.PartType.Ball)
-		creaturePart(model, "Leg", Vector3.new(0.4, 0.5, 2.2), Vector3.new(sign * 1.3, 0.25, 0), waffle)
+		ghost(pipe(model, "Arm", 0.5, 1.4, CFrame.new(sign * 2, 1.2, -0.7), red))
+		ghost(ball(model, "Claw", 1.4, CFrame.new(sign * 2.8, 1.4, -0.9), red))
+		for _, z in ipairs({ -0.8, 0, 0.8 }) do
+			ghost(ball(model, "Foot", 0.6, CFrame.new(sign * 1.5, 0.3, z), waffle))
+		end
+		ghost(cylinder(model, "EyeStalk", 0.25, 0.8, CFrame.new(sign * 0.6, 1.9, -1.2), waffle))
 	end
-	addEyes(model, 1.9, -1, 0.6)
+	addEyes(model, 2.4, -1.2, 0.6)
 	return body
 end
 
 creatureBuilders["Toaster-Gecko"] = function(model)
 	local green = Color3.fromRGB(110, 190, 120)
-	local body = creaturePart(model, "Body", Vector3.new(2.2, 1.8, 3), Vector3.new(0, 1.4, 0), Color3.fromRGB(205, 210, 220))
-	body.Material = Enum.Material.Metal
-	creaturePart(model, "Toast", Vector3.new(1.2, 0.8, 0.3), Vector3.new(0, 2.6, 0), Color3.fromRGB(200, 140, 70))
-	creaturePart(model, "Head", Vector3.new(1.6, 1.2, 1.4), Vector3.new(0, 1.5, -2.1), green)
-	creaturePart(model, "Tail", Vector3.new(0.7, 0.6, 2.6), Vector3.new(0, 0.9, 2.7), green)
+	local body = ghost(pipe(model, "Body", 2.4, 3, CFrame.new(0, 1.5, 0) * ALONG_Z, Color3.fromRGB(205, 210, 220), Enum.Material.Metal))
+	ghost(block(model, "Toast", Vector3.new(1.2, 0.9, 0.3), CFrame.new(0, 2.8, 0), Color3.fromRGB(200, 140, 70)))
+	ghost(ball(model, "Lever", 0.5, CFrame.new(1.3, 1.6, 0.6), Color3.fromRGB(40, 40, 50)))
+	ghost(ball(model, "Head", 1.9, CFrame.new(0, 1.6, -2.2), green))
+	ghost(pipe(model, "Tail", 0.8, 2.6, CFrame.new(0, 1, 2.6) * ALONG_Z, green))
+	ghost(ball(model, "TailTip", 0.9, CFrame.new(0, 1, 4), green))
 	for _, sign in ipairs({ -1, 1 }) do
-		creaturePart(model, "Leg", Vector3.new(0.6, 0.5, 0.8), Vector3.new(sign * 1.3, 0.25, -0.8), green)
-		creaturePart(model, "Leg", Vector3.new(0.6, 0.5, 0.8), Vector3.new(sign * 1.3, 0.25, 0.9), green)
+		ghost(ball(model, "Foot", 0.8, CFrame.new(sign * 1.3, 0.4, -0.9), green))
+		ghost(ball(model, "Foot", 0.8, CFrame.new(sign * 1.3, 0.4, 0.9), green))
 	end
-	addEyes(model, 2, -2.7, 0.5)
+	addEyes(model, 2.2, -2.7, 0.55)
 	return body
 end
 
 creatureBuilders["Pudding-Golem"] = function(model)
 	local pudding = Color3.fromRGB(250, 214, 120)
-	local body = creaturePart(model, "Body", Vector3.new(3.4, 2.4, 3.4), Vector3.new(0, 1.2, 0), pudding)
-	creaturePart(model, "Top", Vector3.new(2.4, 1.4, 2.4), Vector3.new(0, 3.1, 0), pudding)
-	creaturePart(model, "Caramel", Vector3.new(2.6, 0.4, 2.6), Vector3.new(0, 4, 0), Color3.fromRGB(140, 75, 30))
+	local caramel = Color3.fromRGB(140, 75, 30)
+	local body = ghost(cylinder(model, "Body", 3.6, 2.4, CFrame.new(0, 1.2, 0), pudding))
+	ghost(cylinder(model, "Top", 2.6, 1.4, CFrame.new(0, 3.1, 0), pudding))
+	ghost(cylinder(model, "Caramel", 2.8, 0.4, CFrame.new(0, 4, 0), caramel))
+	ghost(ball(model, "Drip", 0.7, CFrame.new(1.2, 3.6, -0.6), caramel))
+	ghost(ball(model, "Drip", 0.6, CFrame.new(-1.1, 3.5, 0.7), caramel))
+	ghost(ball(model, "Cherry", 0.9, CFrame.new(0, 4.6, 0), Color3.fromRGB(220, 40, 60)))
 	for _, sign in ipairs({ -1, 1 }) do
-		creaturePart(model, "Arm", Vector3.new(1, 2, 1), Vector3.new(sign * 2.3, 1.6, 0), pudding)
+		ghost(ball(model, "Arm", 1.4, CFrame.new(sign * 2.2, 1.8, -0.2), pudding))
 	end
-	addEyes(model, 3.2, -1.25, 0.5)
+	addEyes(model, 3.2, -1.3, 0.5)
 	return body
 end
 

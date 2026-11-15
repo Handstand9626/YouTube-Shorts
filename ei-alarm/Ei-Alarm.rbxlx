@@ -1,0 +1,2222 @@
+<roblox version="4">
+<Item class="Workspace" referent="RBX1"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool></Properties></Item>
+<Item class="ReplicatedStorage" referent="RBX4"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX3"><Properties><string name="Name">EiAlarm</string></Properties><Item class="ModuleScript" referent="RBX2"><Properties><string name="Name">Config</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – zentrale Stellschrauben.
+-- ModuleScript in ReplicatedStorage/EiAlarm. Server und Client lesen dieselben Werte.
+-- Bewusst ohne Roblox-Datentypen (Farben als {r, g, b}), damit die Datei auch
+-- ausserhalb von Roblox Studio geladen und getestet werden kann.
+
+local Config = {}
+
+-- Beim Serverstart die Logiktests aus CoreSelfTest ausfuehren und im Output melden.
+Config.RunSelfTests = true
+
+-- Basen und Brutstationen
+Config.MaxBases = 4
+Config.SlotsPerBase = 3
+Config.CreatureCap = 8
+
+-- Bewegung (Studs pro Sekunde)
+Config.WalkSpeed = 16
+Config.CarrySpeedHall = 13 -- offene Halle: kurz, aber das zappelnde Ei bremst
+Config.CarrySpeedVent = 16 -- Lueftung: laengerer Weg, dafuer volle Geschwindigkeit
+Config.StunSpeed = 6
+Config.StunTime = 1.5 -- so lange ist der abgefangene Dieb langsam und darf das Ei nicht aufheben
+
+-- Interaktion
+Config.PromptDistance = 8 -- Reichweite der ProximityPrompts
+Config.InteractRange = 12 -- Server-Toleranz fuer die Reichweitenpruefung
+Config.StealHoldTime = 0.6 -- Haltezeit zum Klauen, fuer alle gleich
+Config.TagRange = 6 -- Abstand, bei dem der Besitzer den Dieb abfaengt
+Config.CarryOffset = { 0, 0.3, -1.7 } -- Lage des getragenen Eis vor der Brust (x, y, z)
+
+-- Diebstahl
+Config.AlarmDelay = 2.5 -- Sekunden Zappeln, bevor der Alarm losgeht
+Config.AlarmSoundTime = 4 -- Dauer des Alarmtons, die Lampe blinkt bis zum Ende der Flucht
+Config.TransitTimeout = 60 -- so lange darf ein Ei insgesamt unterwegs sein
+Config.DropTimeout = 15 -- so lange bleibt ein fallen gelassenes Ei liegen
+Config.MinIncubationAfterSteal = 8 -- Mindestbrutzeit nach dem Sichern (Fenster zum Zurueckklauen)
+
+-- Brueten
+Config.StarterIncubation = 10
+Config.Incubation = 30
+Config.CenterPedestals = 4
+Config.CenterRespawn = 8 -- Sekunden, bis ein leerer Sockel ein neues Ei bekommt
+
+-- Kreaturen. weight = Schlupfchance (relativ), coinsPerSecond = Einkommen.
+Config.Creatures = {
+	{ id = "Waffelkrabbe", weight = 60, coinsPerSecond = 2 },
+	{ id = "Toaster-Gecko", weight = 30, coinsPerSecond = 5 },
+	{ id = "Pudding-Golem", weight = 10, coinsPerSecond = 12 },
+}
+
+-- Sounds. id leer lassen = stumm (Platzhalterphase).
+-- Eigene Uploads oder Audio aus dem Creator Store eintragen: "rbxassetid://123456".
+-- min/max = RollOffMinDistance / RollOffMaxDistance in Studs.
+Config.Sounds = {
+	Alarm = { id = "", volume = 0.9, min = 16, max = 75 },
+	EggCrack = { id = "", volume = 0.8, min = 8, max = 45 },
+	["Waffelkrabbe"] = { id = "", volume = 0.6, min = 6, max = 35 },
+	["Toaster-Gecko"] = { id = "", volume = 0.6, min = 6, max = 35 },
+	["Pudding-Golem"] = { id = "", volume = 0.7, min = 6, max = 40 },
+}
+
+-- Map-Masse in Studs. Die Halle ist ein Quadrat um den Ursprung,
+-- die Lueftung laeuft als Ringkorridor aussen herum.
+Config.Map = {
+	HallHalf = 60,
+	WallThickness = 2,
+	HallWallHeight = 16,
+	VentWidth = 8,
+	VentHeight = 8,
+	DoorWidth = 8,
+	BaseDistance = 46,
+	BaseColors = {
+		{ 255, 176, 59 },
+		{ 86, 180, 233 },
+		{ 240, 110, 150 },
+		{ 120, 200, 120 },
+	},
+}
+
+return Config
+]]></ProtectedString></Properties></Item>
+</Item>
+</Item>
+<Item class="ServerScriptService" referent="RBX10"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX9"><Properties><string name="Name">EiAlarm</string></Properties><Item class="Script" referent="RBX5"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – Serverskript (Script "Main" in ServerScriptService/EiAlarm).
+--
+-- Verbindet die Spielregeln aus EggCore mit der Welt: baut die Map, reagiert
+-- auf ProximityPrompts, prueft Reichweiten, faengt Diebe ab, laesst Eier
+-- schluepfen und zahlt Muenzen aus. Der Client schickt keine eigenen Befehle.
+-- Jede Aktion laeuft ueber einen Prompt, den der Server selbst auswertet.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+
+local sharedFolder = ReplicatedStorage:WaitForChild("EiAlarm")
+local Config = require(sharedFolder:WaitForChild("Config"))
+local EggCore = require(script.Parent:WaitForChild("EggCore"))
+local MapBuilder = require(script.Parent:WaitForChild("MapBuilder"))
+local CoreSelfTest = require(script.Parent:WaitForChild("CoreSelfTest"))
+
+if Config.RunSelfTests then
+	CoreSelfTest.run(EggCore, Config)
+end
+
+local remotes = Instance.new("Folder")
+remotes.Name = "Remotes"
+local notifyEvent = Instance.new("RemoteEvent")
+notifyEvent.Name = "Notify"
+notifyEvent.Parent = remotes
+remotes.Parent = sharedFolder
+
+local core = EggCore.new(Config)
+local map = MapBuilder.build(Config)
+local rng = Random.new()
+
+local eggParts = {} -- [eggId] = Part
+local creatureModels = {} -- [baseId] = { Model }
+local coinValues = {} -- [userId] = IntValue in leaderstats
+local alarms = {} -- [eggId] = { base, theftId, active }
+local alarmSoundToken = {} -- [baseId] = Zaehler, damit ein alter Timer keinen neuen Alarm stoppt
+
+local CARRY_OFFSET = CFrame.new(Config.CarryOffset[1], Config.CarryOffset[2], Config.CarryOffset[3])
+local EGG_Y = MapBuilder.EGG_HALF_HEIGHT
+local LAMP_ON = Color3.fromRGB(255, 40, 40)
+
+local wallParams = RaycastParams.new()
+wallParams.FilterType = Enum.RaycastFilterType.Include
+wallParams.FilterDescendantsInstances = { map.geometry }
+
+local TAKE_FAIL = {
+	HandsFull = "Du trägst schon ein Ei.",
+	OwnEgg = "Das ist dein eigenes Ei. Es brütet noch.",
+	Protected = "Start-Eier sind geschützt.",
+	Stunned = "Erwischt! Du musst kurz verschnaufen.",
+	Busy = "Jemand anderes war schneller.",
+	Gone = "Das Ei ist weg.",
+}
+
+local PLACE_FAIL = {
+	NoEgg = "Hol dir zuerst ein Ei.",
+	NotYourBase = "Das ist nicht deine Basis.",
+	SlotTaken = "Diese Brutstation ist belegt.",
+}
+
+-- Hilfen ---------------------------------------------------------------------
+
+local function notify(userId, text, kind)
+	local player = userId and Players:GetPlayerByUserId(userId)
+	if player then
+		notifyEvent:FireClient(player, text, kind or "info")
+	end
+end
+
+local function nameOf(userId)
+	local player = userId and Players:GetPlayerByUserId(userId)
+	if player then
+		return player.DisplayName
+	end
+	return "Jemand"
+end
+
+-- Gibt HumanoidRootPart und Humanoid zurueck, aber nur fuer lebende Charaktere.
+local function rootOf(player)
+	local character = player.Character
+	if not character then
+		return nil
+	end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if humanoid and root and humanoid.Health > 0 then
+		return root, humanoid
+	end
+	return nil
+end
+
+-- Reichweitenpruefung auf dem Server. Der Client kann sie nicht umgehen.
+local function inRange(player, position)
+	local root = rootOf(player)
+	return root ~= nil and (root.Position - position).Magnitude <= Config.InteractRange
+end
+
+local function inVent(position)
+	local limit = Config.Map.HallHalf + Config.Map.WallThickness / 2
+	return math.max(math.abs(position.X), math.abs(position.Z)) > limit
+end
+
+-- Alarm ----------------------------------------------------------------------
+
+local function setLamp(base, on)
+	if on then
+		base.lamp.Material = Enum.Material.Neon
+		base.lamp.Color = LAMP_ON
+	else
+		base.lamp.Material = Enum.Material.SmoothPlastic
+		base.lamp.Color = base.lampOffColor
+	end
+	base.light.Enabled = on
+end
+
+local function refreshBaseAlarm(baseId)
+	local active = false
+	for _, alarm in pairs(alarms) do
+		if alarm.base == baseId and alarm.active then
+			active = true
+		end
+	end
+	local base = map.bases[baseId]
+	base.model:SetAttribute("Alarm", active)
+	if not active then
+		base.alarmSound:Stop()
+		setLamp(base, false)
+	end
+end
+
+local function startAlarm(alarm, thiefId)
+	alarm.active = true
+	local baseId = alarm.base
+	local base = map.bases[baseId]
+	base.model:SetAttribute("Alarm", true)
+	setLamp(base, true)
+	base.alarmSound:Play()
+	local token = (alarmSoundToken[baseId] or 0) + 1
+	alarmSoundToken[baseId] = token
+	task.delay(Config.AlarmSoundTime, function()
+		if alarmSoundToken[baseId] == token then
+			base.alarmSound:Stop()
+		end
+	end)
+	notify(core.bases[baseId].owner, "EI-ALARM! " .. nameOf(thiefId) .. " klaut dein Ei!", "alarm")
+	notify(thiefId, "Alarm ausgelöst! Lauf!", "alarm")
+end
+
+-- Haelt den Alarm passend zum Ei-Zustand: Start nach der Zappel-Verzoegerung,
+-- Ende, sobald das Ei gesichert oder zurueck ist.
+local function updateAlarm(eggId, egg)
+	local alarm = alarms[eggId]
+	local stolen = egg ~= nil and egg.stolen and egg.home ~= nil
+	if alarm and (not stolen or alarm.theftId ~= egg.theftId) then
+		alarms[eggId] = nil
+		refreshBaseAlarm(alarm.base)
+		alarm = nil
+	end
+	if stolen and not alarm then
+		alarm = { base = egg.home.base, theftId = egg.theftId, active = false }
+		alarms[eggId] = alarm
+		local thiefId = egg.carrier
+		task.delay(Config.AlarmDelay, function()
+			local current = core.eggs[eggId]
+			if alarms[eggId] == alarm and current and current.stolen then
+				startAlarm(alarm, current.carrier or thiefId)
+			end
+		end)
+	end
+end
+
+task.spawn(function()
+	local on = false
+	while true do
+		task.wait(0.3)
+		on = not on
+		for _, base in ipairs(map.bases) do
+			if base.model:GetAttribute("Alarm") then
+				setLamp(base, on)
+			end
+		end
+	end
+end)
+
+-- Darstellung der Eier ---------------------------------------------------------
+
+local onEggPrompt -- weiter unten definiert
+
+local function labelText(egg)
+	if egg.state == "Incubating" then
+		local seconds = math.ceil(egg.remaining)
+		if seconds <= 0 then
+			return "Stall voll"
+		elseif egg.protected then
+			return "Geschützt " .. seconds .. " s"
+		end
+		return seconds .. " s"
+	elseif egg.state == "Center" then
+		return "Labor-Ei"
+	elseif egg.state == "Dropped" then
+		return "Am Boden!"
+	end
+	return ""
+end
+
+local function createEggPart(eggId)
+	local part = MapBuilder.buildEgg(Config, eggId)
+	part:SetAttribute("EggId", eggId)
+	part.Prompt.Triggered:Connect(function(player)
+		onEggPrompt(player, eggId)
+	end)
+	part.Parent = map.eggFolder
+	eggParts[eggId] = part
+	return part
+end
+
+-- Bringt das Part eines Eis auf den Stand von EggCore. Mehrfach aufrufbar.
+local function renderEgg(eggId)
+	local egg = core.eggs[eggId]
+	local part = eggParts[eggId]
+	updateAlarm(eggId, egg)
+
+	if not egg then
+		if part then
+			part:Destroy()
+			eggParts[eggId] = nil
+		end
+		return
+	end
+	if part and not part.Parent then
+		part = nil
+	end
+	if not part then
+		part = createEggPart(eggId)
+	end
+
+	local weld = part:FindFirstChild("CarryWeld")
+	if weld then
+		weld:Destroy()
+	end
+
+	local promptOn, action, hold = false, "Ei nehmen", 0
+	local carrierRoot = nil
+	if egg.state == "Carried" then
+		local carrier = Players:GetPlayerByUserId(egg.carrier)
+		carrierRoot = carrier and rootOf(carrier)
+	end
+
+	if carrierRoot then
+		part.CFrame = carrierRoot.CFrame * CARRY_OFFSET
+		weld = Instance.new("Weld")
+		weld.Name = "CarryWeld"
+		weld.Part0 = carrierRoot
+		weld.Part1 = part
+		weld.C0 = CARRY_OFFSET
+		weld.Parent = part
+		part.Anchored = false
+	else
+		part.Anchored = true
+		if egg.state == "Center" then
+			local pedestal = map.pedestals[egg.home.slot]
+			part.CFrame = pedestal.CFrame * CFrame.new(0, pedestal.Size.Y / 2 + EGG_Y, 0)
+			promptOn = true
+		elseif egg.state == "Incubating" or egg.state == "Hatching" then
+			local slot = map.bases[egg.home.base].slots[egg.home.slot]
+			part.CFrame = slot.CFrame * CFrame.new(0, slot.Size.Y / 2 + EGG_Y, 0)
+			promptOn = egg.state == "Incubating" and not egg.protected
+			action, hold = "Ei klauen", Config.StealHoldTime
+		elseif egg.state == "Dropped" then
+			part.CFrame = CFrame.new(egg.dropPos.X, EGG_Y, egg.dropPos.Z)
+			promptOn = true
+			action = "Ei aufheben"
+		end
+	end
+
+	local prompt = part.Prompt
+	prompt.ActionText = action
+	prompt.HoldDuration = hold
+	prompt.Enabled = promptOn
+	part.StolenHighlight.Enabled = egg.stolen
+	part.Info.Label.Text = labelText(egg)
+	part:SetAttribute("State", egg.state)
+	part:SetAttribute("Stolen", egg.stolen)
+	part:SetAttribute("Owner", egg.owner or 0)
+	part:SetAttribute("Carrier", egg.carrier or 0)
+	part:SetAttribute("PromptOn", promptOn)
+end
+
+local function refreshSlots()
+	for baseId, base in ipairs(map.bases) do
+		local state = core.bases[baseId]
+		base.model:SetAttribute("Owner", state.owner or 0)
+		for slot, slotPrompt in ipairs(base.slotPrompts) do
+			local free = state.owner ~= nil and state.slots[slot] == nil
+			slotPrompt.Enabled = free
+			base.slots[slot]:SetAttribute("PromptOn", free)
+		end
+	end
+end
+
+-- Uebertraegt alle Aenderungen aus EggCore in die Welt.
+local function flush()
+	local ids = {}
+	for eggId in pairs(core.dirty) do
+		ids[#ids + 1] = eggId
+	end
+	core.dirty = {}
+	for _, eggId in ipairs(ids) do
+		renderEgg(eggId)
+	end
+	refreshSlots()
+end
+
+-- Prompts --------------------------------------------------------------------
+
+onEggPrompt = function(player, eggId)
+	local part = eggParts[eggId]
+	if not part or not inRange(player, part.Position) then
+		return
+	end
+	local ok, result = core:take(player.UserId, eggId, os.clock())
+	if not ok then
+		notify(player.UserId, TAKE_FAIL[result] or "Das geht gerade nicht.", "warn")
+	elseif result == "Stolen" then
+		notify(player.UserId, "Geklaut! Bring das Ei in deine Brutstation.", "info")
+	elseif result == "Recovered" then
+		notify(player.UserId, "Gerettet! Dein Ei brütet wieder in deiner Station.", "good")
+	else
+		notify(player.UserId, "Bring das Ei in eine freie Brutstation deiner Basis.", "info")
+	end
+	flush()
+end
+
+local function onSlotPrompt(player, baseId, slot)
+	local slotPart = map.bases[baseId].slots[slot]
+	if not inRange(player, slotPart.Position) then
+		return
+	end
+	local ok, result, wasStolen, victim = core:place(player.UserId, baseId, slot, os.clock())
+	if not ok then
+		notify(player.UserId, PLACE_FAIL[result] or "Das geht gerade nicht.", "warn")
+	elseif wasStolen then
+		notify(player.UserId, "Gesichert! Das Ei gehört jetzt dir.", "good")
+		notify(victim, nameOf(player.UserId) .. " hat dein Ei gesichert. Hol es dir zurück!", "warn")
+	else
+		notify(player.UserId, "Das Ei brütet.", "good")
+	end
+	flush()
+end
+
+for baseId, base in ipairs(map.bases) do
+	for slot, slotPrompt in ipairs(base.slotPrompts) do
+		slotPrompt.Triggered:Connect(function(player)
+			onSlotPrompt(player, baseId, slot)
+		end)
+	end
+end
+
+-- Kreaturen und Schlupf --------------------------------------------------------
+
+local function spawnCreature(baseId, padIndex, creatureId, ownerId)
+	local pads = map.bases[baseId].pads
+	local model = MapBuilder.buildCreature(Config, creatureId, pads[(padIndex - 1) % #pads + 1])
+	model:SetAttribute("Owner", ownerId or 0)
+	model:SetAttribute("Base", baseId)
+	model.Parent = map.creatureFolder
+	creatureModels[baseId] = creatureModels[baseId] or {}
+	table.insert(creatureModels[baseId], model)
+	local voice = model:FindFirstChild("Voice", true)
+	if voice then
+		voice:Play()
+	end
+end
+
+local function clearCreatures(baseId)
+	for _, model in ipairs(creatureModels[baseId] or {}) do
+		model:Destroy()
+	end
+	creatureModels[baseId] = nil
+end
+
+local function tweenTo(part, duration, cframe)
+	local info = TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+	TweenService:Create(part, info, { CFrame = cframe }):Play()
+	task.wait(duration)
+end
+
+-- Schlupf: zweimal wackeln, kurz innehalten, aufplatzen. Das Ei ist in dieser
+-- Zeit im Zustand "Hatching" und kann nicht mehr geklaut werden.
+local function hatch(eggId)
+	local part = eggParts[eggId]
+	if part then
+		local rest = part.CFrame
+		for _ = 1, 2 do
+			tweenTo(part, 0.1, rest * CFrame.Angles(0, 0, math.rad(14)))
+			tweenTo(part, 0.12, rest * CFrame.Angles(0, 0, math.rad(-14)))
+			tweenTo(part, 0.08, rest)
+		end
+		task.wait(0.35)
+	end
+	local ok, creatureId, padIndex, ownerId, baseId = core:finishHatch(eggId, rng:NextNumber())
+	if ok then
+		if part and part.Parent then
+			local burst = MapBuilder.buildHatchBurst(Config, part.Position)
+			burst.Parent = map.root
+			burst.Shards:Emit(24)
+			burst.Crack:Play()
+			Debris:AddItem(burst, 3)
+		end
+		spawnCreature(baseId, padIndex, creatureId, ownerId)
+		notify(ownerId, "Geschlüpft: " .. creatureId .. "!", "good")
+	end
+	flush()
+end
+
+-- Spieler --------------------------------------------------------------------
+
+-- Bringt das Ei eines Spielers, dessen Charakter verschwindet, an seinen
+-- Heimatplatz zurueck. Bei einem Diebstahl ist das die Station des Opfers.
+local function returnCarriedEgg(userId)
+	local state = core.players[userId]
+	local egg = state and state.carrying and core.eggs[state.carrying]
+	if not egg then
+		return
+	end
+	local victim = nil
+	if egg.stolen then
+		victim = egg.owner
+	end
+	core:returnHome(egg.id, os.clock())
+	notify(victim, "Der Dieb ist weg. Dein Ei ist zurück in deiner Station.", "good")
+end
+
+local function onCharacterAdded(player, character)
+	local root = character:WaitForChild("HumanoidRootPart", 10)
+	local humanoid = character:WaitForChild("Humanoid", 10)
+	local state = core.players[player.UserId]
+	if not root or not humanoid or not state then
+		return
+	end
+	humanoid.Died:Connect(function()
+		core:release(player.UserId, root.Position, os.clock())
+		flush()
+	end)
+	-- Normalerweise spawnt der Charakter schon ueber RespawnLocation in der
+	-- eigenen Basis. Falls nicht (z. B. beim allerersten Spawn), nachhelfen.
+	local target = map.bases[state.base].spawnCFrame
+	if (root.Position - target.Position).Magnitude > 15 then
+		task.wait(0.2)
+		if character.Parent then
+			character:PivotTo(target)
+		end
+	end
+end
+
+local function onPlayerAdded(player)
+	local userId = player.UserId
+	local baseId = core:addPlayer(userId)
+	if not baseId then
+		player:Kick("Ei-Alarm! ist voll (maximal " .. Config.MaxBases .. " Spieler).")
+		return
+	end
+	local base = map.bases[baseId]
+	player.RespawnLocation = base.spawn
+	base.sign.Text = player.DisplayName
+
+	local stats = Instance.new("Folder")
+	stats.Name = "leaderstats"
+	local coins = Instance.new("IntValue")
+	coins.Name = "Münzen"
+	coins.Parent = stats
+	stats.Parent = player
+	coinValues[userId] = coins
+
+	core:spawnStarterEgg(userId)
+	flush()
+
+	player.CharacterAdded:Connect(function(character)
+		onCharacterAdded(player, character)
+	end)
+	player.CharacterRemoving:Connect(function()
+		returnCarriedEgg(userId)
+		flush()
+	end)
+	if player.Character then
+		task.spawn(onCharacterAdded, player, player.Character)
+	end
+	notify(userId, "Willkommen im Brutlabor! Dein Start-Ei schlüpft gleich.", "info")
+end
+
+-- Verbindungsabbruch oder Verlassen: getragenes Ei zurueck, Basis freigeben.
+-- CharacterRemoving und PlayerRemoving koennen in beliebiger Reihenfolge
+-- feuern, deshalb raeumen beide ueber returnCarriedEgg auf.
+local function onPlayerRemoving(player)
+	local userId = player.UserId
+	local state = core.players[userId]
+	if not state then
+		return
+	end
+	local baseId = state.base
+	returnCarriedEgg(userId)
+	core:removePlayer(userId, os.clock())
+	clearCreatures(baseId)
+	map.bases[baseId].sign.Text = "Frei"
+	coinValues[userId] = nil
+	flush()
+end
+
+-- Takt -----------------------------------------------------------------------
+
+-- Zehnmal pro Sekunde: Abfangen und Lauftempo.
+local function fastStep(now)
+	for _, egg in pairs(core.eggs) do
+		if egg.state == "Carried" and egg.stolen and egg.owner then
+			local ownerId, carrierId = egg.owner, egg.carrier
+			local owner = Players:GetPlayerByUserId(ownerId)
+			local carrier = Players:GetPlayerByUserId(carrierId)
+			local ownerRoot = owner and rootOf(owner)
+			local carrierRoot = carrier and rootOf(carrier)
+			if ownerRoot and carrierRoot then
+				local offset = carrierRoot.Position - ownerRoot.Position
+				-- Nicht durch Waende abfangen: zwischen beiden darf keine Map-Geometrie liegen.
+				if offset.Magnitude <= Config.TagRange and not workspace:Raycast(ownerRoot.Position, offset, wallParams) then
+					if core:tag(ownerId, carrierId, carrierRoot.Position, now) then
+						notify(ownerId, "Erwischt! Heb dein Ei auf, bevor es jemand anderes tut.", "good")
+						notify(carrierId, "Abgefangen! Das Ei ist dir aus den Händen gefallen.", "warn")
+					end
+				end
+			end
+		end
+	end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		local state = core.players[player.UserId]
+		local root, humanoid = rootOf(player)
+		if state and humanoid then
+			local speed = Config.WalkSpeed
+			if now < state.stunnedUntil then
+				speed = Config.StunSpeed
+			elseif state.carrying then
+				if inVent(root.Position) then
+					speed = Config.CarrySpeedVent
+				else
+					speed = Config.CarrySpeedHall
+				end
+			end
+			if humanoid.WalkSpeed ~= speed then
+				humanoid.WalkSpeed = speed
+			end
+		end
+	end
+
+	if next(core.dirty) then
+		flush()
+	end
+end
+
+-- Einmal pro Sekunde: Eier nachfuellen, bruten, Zeitlimits, Muenzen.
+local function slowStep(dt, now)
+	core:fillCenter(now)
+	for _, eggId in ipairs(core:tick(dt)) do
+		if core:beginHatch(eggId) then
+			task.spawn(hatch, eggId)
+		end
+	end
+	for _, entry in ipairs(core:expire(now)) do
+		notify(entry.carrier, "Zu langsam! Das Ei ist zurück an seinem Platz.", "warn")
+	end
+	core:payout()
+	for userId, value in pairs(coinValues) do
+		local state = core.players[userId]
+		if state then
+			value.Value = state.coins
+		end
+	end
+	flush()
+	for eggId, egg in pairs(core.eggs) do
+		local part = eggParts[eggId]
+		if part then
+			part.Info.Label.Text = labelText(egg)
+		end
+	end
+end
+
+local fastTimer, slowTimer = 0, 0
+RunService.Heartbeat:Connect(function(dt)
+	local now = os.clock()
+	fastTimer = fastTimer + dt
+	slowTimer = slowTimer + dt
+	if fastTimer >= 0.1 then
+		fastTimer = 0
+		fastStep(now)
+	end
+	if slowTimer >= 1 then
+		local elapsed = slowTimer
+		slowTimer = 0
+		slowStep(elapsed, now)
+	end
+end)
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(onPlayerRemoving)
+for _, player in ipairs(Players:GetPlayers()) do
+	task.spawn(onPlayerAdded, player)
+end
+
+print("[Ei-Alarm] Server bereit.")
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX6"><Properties><string name="Name">EggCore</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – Spielregeln als reine Logik (ModuleScript, nur Server).
+--
+-- Hier liegt die einzige Wahrheit ueber Eier, Basen, Besitz und Muenzen.
+-- Das Modul kennt keine Roblox-Instanzen und wartet nie (kein task.wait, kein
+-- Yield). Jede Funktion prueft und aendert den Zustand in einem Zug. Weil
+-- Luau-Skripte auf dem Server nacheinander laufen, kann deshalb immer nur ein
+-- Spieler ein Ei beanspruchen: der zweite Aufruf sieht schon den neuen Zustand.
+--
+-- Ei-Zustaende:
+--   Center     liegt auf einem Sockel der zentralen Eierstation
+--   Incubating bruetet in einer Brutstation (home = Basis + Slot)
+--   Carried    wird getragen
+--   Dropped    liegt nach dem Abfangen auf dem Boden
+--   Hatching   schluepft gerade, nicht mehr greifbar
+--
+-- Solange ein Ei unterwegs ist, bleibt sein Heimatplatz (home) reserviert.
+-- Dorthin kehrt es zurueck, wenn die Flucht scheitert oder der Traeger geht.
+
+local EggCore = {}
+EggCore.__index = EggCore
+
+function EggCore.new(config)
+	local self = setmetatable({}, EggCore)
+	self.config = config
+	self.eggs = {} -- [eggId] = egg
+	self.nextEggId = 1
+	self.players = {} -- [userId] = { base, coins, carrying, stunnedUntil }
+	self.bases = {} -- [baseId] = { owner, slots = { [slot] = eggId }, creatures, reserved }
+	self.center = {} -- [pedestal] = eggId
+	self.centerEmptySince = {} -- [pedestal] = Zeitpunkt, seit dem der Sockel leer ist
+	self.dirty = {} -- [eggId] = true: Darstellung muss aktualisiert werden
+	for baseId = 1, config.MaxBases do
+		self.bases[baseId] = { owner = nil, slots = {}, creatures = {}, reserved = 0 }
+	end
+	return self
+end
+
+-- Intern -------------------------------------------------------------------
+
+function EggCore:_newEgg(remaining)
+	local egg = {
+		id = self.nextEggId,
+		state = "Center",
+		home = nil,
+		owner = nil, -- Besitzer der Brutstation; waehrend eines Diebstahls das Opfer
+		carrier = nil,
+		stolen = false,
+		theftId = 0,
+		protected = false,
+		remaining = remaining,
+		dropPos = nil,
+		blockedUser = nil,
+		blockedUntil = 0,
+		dropDeadline = nil,
+		transitDeadline = nil,
+	}
+	self.nextEggId = self.nextEggId + 1
+	self.eggs[egg.id] = egg
+	self.dirty[egg.id] = true
+	return egg
+end
+
+function EggCore:_clearCarrier(egg)
+	if egg.carrier then
+		local carrier = self.players[egg.carrier]
+		if carrier and carrier.carrying == egg.id then
+			carrier.carrying = nil
+		end
+		egg.carrier = nil
+	end
+end
+
+function EggCore:_releaseHome(egg, now)
+	local home = egg.home
+	if not home then
+		return
+	end
+	if home.kind == "Center" then
+		if self.center[home.slot] == egg.id then
+			self.center[home.slot] = nil
+			self.centerEmptySince[home.slot] = now or 0
+		end
+	else
+		local base = self.bases[home.base]
+		if base and base.slots[home.slot] == egg.id then
+			base.slots[home.slot] = nil
+		end
+	end
+	egg.home = nil
+end
+
+function EggCore:_remove(egg, now)
+	self:_clearCarrier(egg)
+	self:_releaseHome(egg, now)
+	egg.state = "Gone"
+	egg.stolen = false
+	self.eggs[egg.id] = nil
+	self.dirty[egg.id] = true
+end
+
+function EggCore:_carry(egg, userId, now, startsTransit)
+	egg.state = "Carried"
+	egg.carrier = userId
+	egg.dropPos = nil
+	egg.dropDeadline = nil
+	self.players[userId].carrying = egg.id
+	if startsTransit then
+		egg.transitDeadline = now + self.config.TransitTimeout
+	end
+	self.dirty[egg.id] = true
+end
+
+function EggCore:_drop(egg, pos, now)
+	self:_clearCarrier(egg)
+	egg.state = "Dropped"
+	egg.dropPos = pos
+	egg.dropDeadline = now + self.config.DropTimeout
+	self.dirty[egg.id] = true
+end
+
+-- Spieler und Basen ----------------------------------------------------------
+
+-- Gibt die Nummer der zugewiesenen Basis zurueck, oder nil, wenn alle belegt sind.
+function EggCore:addPlayer(userId)
+	if self.players[userId] then
+		return self.players[userId].base
+	end
+	for baseId = 1, self.config.MaxBases do
+		local base = self.bases[baseId]
+		if base.owner == nil then
+			base.owner = userId
+			self.players[userId] = { base = baseId, coins = 0, carrying = nil, stunnedUntil = 0 }
+			return baseId
+		end
+	end
+	return nil
+end
+
+-- Geschuetztes Start-Ei in Slot 1 der eigenen Basis.
+function EggCore:spawnStarterEgg(userId)
+	local player = self.players[userId]
+	if not player then
+		return nil
+	end
+	local base = self.bases[player.base]
+	if base.slots[1] then
+		return nil
+	end
+	local egg = self:_newEgg(self.config.StarterIncubation)
+	egg.state = "Incubating"
+	egg.owner = userId
+	egg.protected = true
+	egg.home = { kind = "Base", base = player.base, slot = 1 }
+	base.slots[1] = egg.id
+	return egg.id
+end
+
+-- Raeumt alles auf, was einem Spieler gehoert. Ein getragenes Ei kehrt an
+-- seinen Heimatplatz zurueck (Verbindungsabbruch waehrend der Flucht).
+function EggCore:removePlayer(userId, now)
+	local player = self.players[userId]
+	if not player then
+		return false
+	end
+	if player.carrying then
+		self:returnHome(player.carrying, now)
+	end
+	local base = self.bases[player.base]
+	for _, egg in pairs(self.eggs) do
+		if egg.owner == userId then
+			if egg.state == "Incubating" or egg.state == "Hatching" then
+				self:_remove(egg, now)
+			else
+				-- Das Ei ist gerade mit einem Dieb unterwegs oder liegt am Boden.
+				-- Es verliert Besitzer und Heimatplatz und wird herrenlos.
+				egg.home = nil
+				egg.owner = nil
+				egg.stolen = false
+				self.dirty[egg.id] = true
+			end
+		end
+	end
+	base.owner = nil
+	base.slots = {}
+	base.creatures = {}
+	base.reserved = 0
+	self.players[userId] = nil
+	return true
+end
+
+-- Zentrale Eierstation --------------------------------------------------------
+
+function EggCore:spawnCenterEgg(pedestal)
+	if self.center[pedestal] then
+		return nil
+	end
+	local egg = self:_newEgg(self.config.Incubation)
+	egg.home = { kind = "Center", slot = pedestal }
+	self.center[pedestal] = egg.id
+	return egg.id
+end
+
+-- Fuellt Sockel auf, die lange genug leer waren.
+function EggCore:fillCenter(now)
+	local spawned = {}
+	for pedestal = 1, self.config.CenterPedestals do
+		if not self.center[pedestal] then
+			local since = self.centerEmptySince[pedestal]
+			if since == nil or now - since >= self.config.CenterRespawn then
+				spawned[#spawned + 1] = self:spawnCenterEgg(pedestal)
+			end
+		end
+	end
+	return spawned
+end
+
+-- Aktionen -------------------------------------------------------------------
+
+-- Ei nehmen, klauen, aufheben oder (als Besitzer) zurueckholen.
+-- Rueckgabe: true, "Taken" | "Stolen" | "Recovered"  oder  false, Grund.
+function EggCore:take(userId, eggId, now)
+	local player = self.players[userId]
+	if not player then
+		return false, "NoPlayer"
+	end
+	local egg = self.eggs[eggId]
+	if not egg then
+		return false, "Gone"
+	end
+	if player.carrying then
+		return false, "HandsFull"
+	end
+
+	if egg.state == "Center" then
+		self:_carry(egg, userId, now, true)
+		return true, "Taken"
+	end
+
+	if egg.state == "Incubating" then
+		if egg.owner == userId then
+			return false, "OwnEgg"
+		end
+		if egg.protected then
+			return false, "Protected"
+		end
+		egg.stolen = true
+		egg.theftId = egg.theftId + 1
+		self:_carry(egg, userId, now, true)
+		return true, "Stolen"
+	end
+
+	if egg.state == "Dropped" then
+		if egg.blockedUser == userId and now < egg.blockedUntil then
+			return false, "Stunned"
+		end
+		if egg.owner == userId then
+			self:returnHome(eggId, now)
+			return true, "Recovered"
+		end
+		self:_carry(egg, userId, now, false)
+		return true, "Taken"
+	end
+
+	-- Carried oder Hatching: jemand anderes war schneller.
+	return false, "Busy"
+end
+
+-- Getragenes Ei in einen freien Slot der eigenen Basis setzen.
+-- Rueckgabe: true, "Placed", wasStolen, victimUserId  oder  false, Grund.
+function EggCore:place(userId, baseId, slot, now)
+	local player = self.players[userId]
+	if not player then
+		return false, "NoPlayer"
+	end
+	local egg = player.carrying and self.eggs[player.carrying]
+	if not egg then
+		return false, "NoEgg"
+	end
+	local base = self.bases[baseId]
+	if not base or base.owner ~= userId then
+		return false, "NotYourBase"
+	end
+	if type(slot) ~= "number" or slot < 1 or slot > self.config.SlotsPerBase or slot % 1 ~= 0 then
+		return false, "BadSlot"
+	end
+	if base.slots[slot] then
+		return false, "SlotTaken"
+	end
+
+	local wasStolen = egg.stolen
+	local victim = nil
+	if wasStolen then
+		victim = egg.owner
+	end
+
+	self:_clearCarrier(egg)
+	self:_releaseHome(egg, now)
+	egg.home = { kind = "Base", base = baseId, slot = slot }
+	base.slots[slot] = egg.id
+	egg.state = "Incubating"
+	egg.owner = userId
+	egg.stolen = false
+	egg.blockedUser = nil
+	egg.transitDeadline = nil
+	if wasStolen and egg.remaining < self.config.MinIncubationAfterSteal then
+		egg.remaining = self.config.MinIncubationAfterSteal
+	end
+	self.dirty[egg.id] = true
+	return true, "Placed", wasStolen, victim
+end
+
+-- Der Besitzer faengt den Dieb ab: das Ei faellt an der Stelle pos zu Boden.
+-- Rueckgabe: true, eggId  oder  false, Grund.
+function EggCore:tag(ownerId, carrierId, pos, now)
+	local carrier = self.players[carrierId]
+	local egg = carrier and carrier.carrying and self.eggs[carrier.carrying]
+	if not egg then
+		return false, "NoEgg"
+	end
+	if not egg.stolen or egg.owner ~= ownerId then
+		return false, "NotOwner"
+	end
+	self:_drop(egg, pos, now)
+	egg.blockedUser = carrierId
+	egg.blockedUntil = now + self.config.StunTime
+	carrier.stunnedUntil = now + self.config.StunTime
+	return true, egg.id
+end
+
+-- Der Traeger stirbt: ein geklautes Ei faellt zu Boden, jedes andere kehrt heim.
+function EggCore:release(userId, pos, now)
+	local player = self.players[userId]
+	local egg = player and player.carrying and self.eggs[player.carrying]
+	if not egg then
+		return false, "NoEgg"
+	end
+	if egg.stolen then
+		self:_drop(egg, pos, now)
+		egg.blockedUser = nil
+		return true, egg.id
+	end
+	self:returnHome(egg.id, now)
+	return true, egg.id
+end
+
+-- Bringt ein Ei an seinen Heimatplatz zurueck. Herrenlose Eier verschwinden.
+-- Rueckgabe: true, "Returned" | "Removed".
+function EggCore:returnHome(eggId, now)
+	local egg = self.eggs[eggId]
+	if not egg then
+		return false, "Gone"
+	end
+	self:_clearCarrier(egg)
+	if not egg.home then
+		self:_remove(egg, now)
+		return true, "Removed"
+	end
+	if egg.home.kind == "Center" then
+		egg.state = "Center"
+	else
+		egg.state = "Incubating"
+	end
+	egg.stolen = false
+	egg.dropPos = nil
+	egg.dropDeadline = nil
+	egg.transitDeadline = nil
+	egg.blockedUser = nil
+	self.dirty[egg.id] = true
+	return true, "Returned"
+end
+
+-- Zeitabhaengiges -------------------------------------------------------------
+
+-- Holt Eier zurueck, die zu lange unterwegs sind oder zu lange am Boden liegen.
+-- Rueckgabe: Liste { eggId, carrier } der betroffenen Eier.
+function EggCore:expire(now)
+	local expired = {}
+	for id, egg in pairs(self.eggs) do
+		local inTransit = egg.state == "Carried" or egg.state == "Dropped"
+		local late = inTransit and egg.transitDeadline ~= nil and now >= egg.transitDeadline
+		local lying = egg.state == "Dropped" and egg.dropDeadline ~= nil and now >= egg.dropDeadline
+		if late or lying then
+			expired[#expired + 1] = { eggId = id, carrier = egg.carrier }
+		end
+	end
+	for _, entry in ipairs(expired) do
+		self:returnHome(entry.eggId, now)
+	end
+	return expired
+end
+
+function EggCore:_hasCreatureRoom(base)
+	return #base.creatures + base.reserved < self.config.CreatureCap
+end
+
+-- Zaehlt die Brutzeit herunter. Rueckgabe: Liste der schlupfbereiten Ei-IDs.
+function EggCore:tick(dt)
+	local ready = {}
+	for id, egg in pairs(self.eggs) do
+		if egg.state == "Incubating" then
+			if egg.remaining > 0 then
+				egg.remaining = math.max(0, egg.remaining - dt)
+			end
+			if egg.remaining <= 0 and self:_hasCreatureRoom(self.bases[egg.home.base]) then
+				ready[#ready + 1] = id
+			end
+		end
+	end
+	return ready
+end
+
+-- Sperrt das Ei fuer die Schlupfanimation. Ab jetzt kann es niemand mehr klauen.
+function EggCore:beginHatch(eggId)
+	local egg = self.eggs[eggId]
+	if not egg or egg.state ~= "Incubating" or egg.remaining > 0 then
+		return false
+	end
+	local base = self.bases[egg.home.base]
+	if not self:_hasCreatureRoom(base) then
+		return false
+	end
+	egg.state = "Hatching"
+	base.reserved = base.reserved + 1
+	self.dirty[egg.id] = true
+	return true
+end
+
+-- roll: Zufallszahl in [0, 1). Der Server wuerfelt, nie der Client.
+function EggCore:pickCreature(roll)
+	local total = 0
+	for _, creature in ipairs(self.config.Creatures) do
+		total = total + creature.weight
+	end
+	local target = roll * total
+	local sum = 0
+	for _, creature in ipairs(self.config.Creatures) do
+		sum = sum + creature.weight
+		if target < sum then
+			return creature
+		end
+	end
+	return self.config.Creatures[#self.config.Creatures]
+end
+
+-- Schliesst den Schlupf ab: Ei weg, Slot frei, Kreatur gehoert sicher dem Besitzer.
+-- Rueckgabe: true, creatureId, padIndex, ownerUserId, baseId  oder  false.
+function EggCore:finishHatch(eggId, roll)
+	local egg = self.eggs[eggId]
+	if not egg or egg.state ~= "Hatching" then
+		return false
+	end
+	local baseId = egg.home.base
+	local base = self.bases[baseId]
+	local owner = egg.owner
+	local creature = self:pickCreature(roll)
+	base.reserved = math.max(0, base.reserved - 1)
+	base.creatures[#base.creatures + 1] = { id = creature.id, coinsPerSecond = creature.coinsPerSecond }
+	self:_remove(egg)
+	return true, creature.id, #base.creatures, owner, baseId
+end
+
+function EggCore:incomeOf(baseId)
+	local income = 0
+	for _, creature in ipairs(self.bases[baseId].creatures) do
+		income = income + creature.coinsPerSecond
+	end
+	return income
+end
+
+-- Einmal pro Sekunde aufrufen: jede Kreatur zahlt an den Besitzer ihrer Basis.
+function EggCore:payout()
+	for baseId, base in pairs(self.bases) do
+		local player = base.owner and self.players[base.owner]
+		if player then
+			player.coins = player.coins + self:incomeOf(baseId)
+		end
+	end
+end
+
+return EggCore
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX7"><Properties><string name="Name">MapBuilder</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – baut die Platzhalter-Map und die Platzhalter-Modelle aus Parts
+-- (ModuleScript, nur Server). So ist der erste Test ohne Blender-Import spielbar.
+-- Spaeter ersetzen importierte Modelle die Funktionen buildEgg und buildCreature.
+--
+-- Aufbau von oben gesehen (Masse aus Config.Map):
+--   Halle:    Quadrat um den Ursprung, in der Mitte die Eierstation
+--   Basen:    vier Stueck, je eine vor der Mitte jeder Hallenwand
+--   Lueftung: Ringkorridor hinter den Hallenwaenden, Zugang durch eine Tuer
+--             hinter jeder Basis
+
+local MapBuilder = {}
+
+MapBuilder.EGG_HALF_HEIGHT = 1.4
+
+local function rgb(c)
+	return Color3.fromRGB(c[1], c[2], c[3])
+end
+
+local function make(className, props, parent)
+	local instance = Instance.new(className)
+	for key, value in pairs(props) do
+		instance[key] = value
+	end
+	instance.Parent = parent
+	return instance
+end
+
+local function block(parent, name, size, cframe, color, material)
+	return make("Part", {
+		Name = name,
+		Size = size,
+		CFrame = cframe,
+		Color = color,
+		Material = material or Enum.Material.SmoothPlastic,
+		Anchored = true,
+		TopSurface = Enum.SurfaceType.Smooth,
+		BottomSurface = Enum.SurfaceType.Smooth,
+	}, parent)
+end
+
+local function prompt(parent, actionText, objectText, config)
+	return make("ProximityPrompt", {
+		Name = "Prompt",
+		ActionText = actionText,
+		ObjectText = objectText,
+		HoldDuration = 0,
+		MaxActivationDistance = config.PromptDistance,
+		RequiresLineOfSight = false,
+		Enabled = false,
+	}, parent)
+end
+
+local function sound(parent, name, spec)
+	return make("Sound", {
+		Name = name,
+		SoundId = spec.id,
+		Volume = spec.volume,
+		RollOffMode = Enum.RollOffMode.InverseTapered,
+		RollOffMinDistance = spec.min,
+		RollOffMaxDistance = spec.max,
+	}, parent)
+end
+
+local COLOR_FLOOR = Color3.fromRGB(214, 220, 228)
+local COLOR_TILE = Color3.fromRGB(176, 184, 196)
+local COLOR_WALL = Color3.fromRGB(236, 240, 245)
+local COLOR_TRIM = Color3.fromRGB(60, 190, 200)
+local COLOR_VENT = Color3.fromRGB(110, 118, 128)
+local COLOR_METAL = Color3.fromRGB(70, 76, 86)
+local COLOR_CREAM = Color3.fromRGB(250, 240, 200)
+local COLOR_LAMP_OFF = Color3.fromRGB(90, 20, 20)
+local TANK_COLORS = {
+	Color3.fromRGB(120, 255, 140),
+	Color3.fromRGB(255, 120, 200),
+	Color3.fromRGB(120, 220, 255),
+	Color3.fromRGB(255, 220, 90),
+}
+
+local UPRIGHT = CFrame.Angles(0, 0, math.rad(90))
+local ALONG_Z = CFrame.Angles(0, math.rad(90), 0)
+
+-- Stehender Zylinder. cframe ist die Mitte.
+local function cylinder(parent, name, diameter, height, cframe, color, material)
+	local part = block(parent, name, Vector3.new(height, diameter, diameter), cframe * UPRIGHT, color, material)
+	part.Shape = Enum.PartType.Cylinder
+	return part
+end
+
+-- Liegender Zylinder entlang der lokalen X-Achse.
+local function pipe(parent, name, diameter, length, cframe, color, material)
+	local part = block(parent, name, Vector3.new(length, diameter, diameter), cframe, color, material)
+	part.Shape = Enum.PartType.Cylinder
+	return part
+end
+
+local function ball(parent, name, diameter, cframe, color, material)
+	local part = block(parent, name, Vector3.new(diameter, diameter, diameter), cframe, color, material)
+	part.Shape = Enum.PartType.Ball
+	return part
+end
+
+-- Deko steht niemandem im Weg.
+local function ghost(part)
+	part.CanCollide = false
+	return part
+end
+
+-- Helles, leicht dunstiges Laborlicht mit sanftem Leuchten um Neonteile.
+local function setupLighting()
+	local Lighting = game:GetService("Lighting")
+	Lighting.ClockTime = 14.5
+	Lighting.Brightness = 2.2
+	Lighting.Ambient = Color3.fromRGB(110, 115, 130)
+	Lighting.OutdoorAmbient = Color3.fromRGB(140, 145, 160)
+	local function ensure(className, props)
+		local effect = Lighting:FindFirstChildOfClass(className) or Instance.new(className)
+		for key, value in pairs(props) do
+			effect[key] = value
+		end
+		effect.Parent = Lighting
+	end
+	ensure("Atmosphere", { Density = 0.28, Offset = 0.2, Haze = 1.2, Color = Color3.fromRGB(200, 215, 235) })
+	ensure("BloomEffect", { Intensity = 0.6, Size = 20, Threshold = 1.4 })
+	ensure("ColorCorrectionEffect", { Saturation = 0.18, Contrast = 0.06 })
+end
+
+local function buildSide(geometry, decor, side, sideIndex, M)
+	local wallZ = M.HallHalf + M.WallThickness / 2
+	local innerHalf = M.HallHalf + M.WallThickness
+	local outerHalf = innerHalf + M.VentWidth + M.WallThickness
+	local doorHalf = M.DoorWidth / 2
+	local segment = innerHalf - doorHalf
+	local faceZ = M.HallHalf - 0.2
+
+	-- Hallenwand mit Tuer zur Lueftung
+	for _, sign in ipairs({ -1, 1 }) do
+		local x = sign * (doorHalf + segment / 2)
+		block(
+			geometry,
+			"HallWall",
+			Vector3.new(segment, M.HallWallHeight, M.WallThickness),
+			side * CFrame.new(x, M.HallWallHeight / 2, wallZ),
+			COLOR_WALL
+		)
+		ghost(block(decor, "WallBand", Vector3.new(segment - 2, 2, 0.3), side * CFrame.new(x - sign, 1, faceZ), COLOR_TRIM))
+		-- Tuerrahmen
+		ghost(cylinder(decor, "DoorPost", 1.2, M.VentHeight, side * CFrame.new(sign * (doorHalf + 0.3), M.VentHeight / 2, faceZ), COLOR_METAL, Enum.Material.Metal))
+	end
+	local lintelHeight = M.HallWallHeight - M.VentHeight
+	block(
+		geometry,
+		"DoorLintel",
+		Vector3.new(M.DoorWidth, lintelHeight, M.WallThickness),
+		side * CFrame.new(0, M.VentHeight + lintelHeight / 2, wallZ),
+		COLOR_WALL
+	)
+	ghost(pipe(decor, "DoorGlow", 0.5, M.DoorWidth + 1.8, side * CFrame.new(0, M.VentHeight + 0.3, faceZ), COLOR_TRIM, Enum.Material.Neon))
+
+	-- Runde Wandsaeulen und Leuchtband unter der Mauerkrone
+	for _, x in ipairs({ -50, -30, -12, 12, 30, 50 }) do
+		ghost(cylinder(decor, "Pillar", 2.4, M.HallWallHeight, side * CFrame.new(x, M.HallWallHeight / 2, faceZ), COLOR_WALL))
+		ghost(ball(decor, "PillarCap", 2.8, side * CFrame.new(x, M.HallWallHeight, faceZ), COLOR_TRIM))
+	end
+	ghost(pipe(decor, "WallGlow", 0.4, M.HallHalf * 2, side * CFrame.new(0, M.HallWallHeight - 1, faceZ), COLOR_TRIM, Enum.Material.Neon))
+
+	-- Brodelnder Tank in der Hallenecke mit Rohr an der Wand
+	local corner = side * CFrame.new(M.HallHalf - 8, 0, M.HallHalf - 8)
+	local liquid = TANK_COLORS[(sideIndex - 1) % #TANK_COLORS + 1]
+	cylinder(decor, "TankBase", 9, 1, corner * CFrame.new(0, 0.5, 0), COLOR_METAL, Enum.Material.Metal)
+	local glass = cylinder(decor, "TankGlass", 8, 10, corner * CFrame.new(0, 6, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass)
+	glass.Transparency = 0.6
+	local fill = ghost(cylinder(decor, "TankLiquid", 7, 7, corner * CFrame.new(0, 4.5, 0), liquid, Enum.Material.Neon))
+	fill.Transparency = 0.25
+	make("PointLight", { Color = liquid, Range = 22, Brightness = 1.2, Shadows = false }, fill)
+	for index, offset in ipairs({ { -1.5, 2.5, 1 }, { 1.2, 4.5, -1.4 }, { 0.4, 6.5, 1.6 } }) do
+		ghost(ball(decor, "Bubble" .. index, 1.1, corner * CFrame.new(offset[1], offset[2], offset[3]), Color3.fromRGB(255, 255, 255), Enum.Material.Neon))
+	end
+	ghost(cylinder(decor, "TankCap", 9, 1, corner * CFrame.new(0, 11.5, 0), COLOR_METAL, Enum.Material.Metal))
+	ghost(cylinder(decor, "TankRiser", 1.2, 2, corner * CFrame.new(0, 13, 0), COLOR_METAL, Enum.Material.Metal))
+	ghost(pipe(decor, "TankElbow", 1.2, 7, corner * CFrame.new(0, 13.6, 3.5) * ALONG_Z, COLOR_METAL, Enum.Material.Metal))
+	ghost(pipe(decor, "TankPipe", 1.2, 40, side * CFrame.new(M.HallHalf - 28, 13.6, M.HallHalf - 1), COLOR_METAL, Enum.Material.Metal))
+
+	-- Lueftung: Aussenwand, Decke, Lichter
+	block(
+		geometry,
+		"VentOuterWall",
+		Vector3.new(outerHalf * 2, M.VentHeight + 1, M.WallThickness),
+		side * CFrame.new(0, (M.VentHeight + 1) / 2, outerHalf - M.WallThickness / 2),
+		COLOR_VENT,
+		Enum.Material.Metal
+	)
+	local ventZ = innerHalf + M.VentWidth / 2
+	block(
+		geometry,
+		"VentRoof",
+		Vector3.new(outerHalf * 2, 1, M.VentWidth),
+		side * CFrame.new(0, M.VentHeight + 0.5, ventZ),
+		COLOR_VENT,
+		Enum.Material.Metal
+	)
+	for _, x in ipairs({ -ventZ, -ventZ / 2, 0, ventZ / 2 }) do
+		local lamp = ghost(pipe(
+			geometry,
+			"VentLight",
+			0.6,
+			3,
+			side * CFrame.new(x, M.VentHeight - 0.3, ventZ),
+			Color3.fromRGB(150, 230, 255),
+			Enum.Material.Neon
+		))
+		make("PointLight", { Range = 18, Brightness = 0.9, Shadows = false }, lamp)
+	end
+end
+
+local function buildBase(root, baseId, side, config)
+	local M = config.Map
+	local origin = side * CFrame.new(0, 0, M.BaseDistance)
+	local color = rgb(M.BaseColors[baseId])
+	local model = make("Model", { Name = "Base" .. baseId }, root)
+	model:SetAttribute("Owner", 0)
+	model:SetAttribute("Alarm", false)
+
+	block(model, "Plate", Vector3.new(30, 0.2, 26), origin * CFrame.new(0, 0.1, 0), color)
+	-- Runde Eckpfosten mit Kugelkopf
+	for _, x in ipairs({ -15, 15 }) do
+		for _, z in ipairs({ -13, 13 }) do
+			ghost(cylinder(model, "Post", 1.4, 3, origin * CFrame.new(x, 1.5, z), COLOR_WALL))
+			ghost(ball(model, "PostCap", 2, origin * CFrame.new(x, 3.4, z), color, Enum.Material.Neon))
+		end
+	end
+
+	-- Brutstationen: drei Slots in einer Reihe vor der Lueftungstuer.
+	-- Der Slot selbst ist ein unsichtbarer Quader (Kollision, Prompt, Ei-Position),
+	-- sichtbar ist die runde Brutmaschine mit Glaskuppel darum herum.
+	local slots, slotPrompts = {}, {}
+	for slot = 1, config.SlotsPerBase do
+		local center = origin * CFrame.new((slot - 2) * 8, 0.6, 8)
+		local part = block(model, "Slot" .. slot, Vector3.new(4, 1, 4), center, COLOR_METAL, Enum.Material.Metal)
+		part.Transparency = 1
+		part:SetAttribute("PromptOn", false)
+		slots[slot] = part
+		slotPrompts[slot] = prompt(part, "Ei einsetzen", "Brutstation", config)
+
+		ghost(cylinder(model, "IncubatorBase", 4.6, 1, center, COLOR_METAL, Enum.Material.Metal))
+		ghost(cylinder(model, "IncubatorRing", 5.2, 0.2, center * CFrame.new(0, -0.3, 0), color, Enum.Material.Neon))
+		local dome = ghost(ball(model, "IncubatorDome", 4.6, center * CFrame.new(0, 2.1, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass))
+		dome.Transparency = 0.75
+	end
+
+	-- Stellplaetze fuer geschluepfte Kreaturen, Blick zur Hallenmitte
+	local pads = {}
+	for row = 0, 1 do
+		for column = 0, 3 do
+			local pad = origin * CFrame.new(-10.5 + column * 7, 0.2, -3 - row * 6)
+			pads[#pads + 1] = pad
+			ghost(cylinder(model, "PadMark", 4.5, 0.1, pad * CFrame.new(0, 0.05, 0), COLOR_WALL))
+		end
+	end
+
+	-- Eigener Spawnpunkt, Blick zur Hallenmitte
+	local spawnPad = make("SpawnLocation", {
+		Name = "Spawn",
+		Size = Vector3.new(6, 0.4, 6),
+		CFrame = origin * CFrame.new(0, 0.4, 1),
+		Color = color,
+		Material = Enum.Material.SmoothPlastic,
+		Transparency = 1,
+		Anchored = true,
+		Neutral = true,
+		Duration = 0,
+		TopSurface = Enum.SurfaceType.Smooth,
+	}, model)
+	ghost(cylinder(model, "SpawnMark", 6, 0.1, origin * CFrame.new(0, 0.62, 1), COLOR_CREAM, Enum.Material.Neon))
+
+	-- Alarmlampe auf einem Mast, Schild ueber der Lueftungstuer
+	cylinder(model, "LampPole", 0.7, 9, origin * CFrame.new(-13, 4.5, 11), COLOR_METAL, Enum.Material.Metal)
+	local lamp = ball(model, "AlarmLamp", 2, origin * CFrame.new(-13, 10, 11), COLOR_LAMP_OFF)
+	lamp.CanCollide = false
+	local light = make("PointLight", { Color = Color3.fromRGB(255, 40, 40), Range = 40, Brightness = 3, Enabled = false }, lamp)
+	local alarmSound = sound(lamp, "Alarm", config.Sounds.Alarm)
+	alarmSound.Looped = true
+
+	local signPart = block(model, "Sign", Vector3.new(12, 3, 0.4), origin * CFrame.new(0, 11, 13.7), color)
+	signPart.CanCollide = false
+	local gui = make("SurfaceGui", { Face = Enum.NormalId.Front }, signPart)
+	local sign = make("TextLabel", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		TextScaled = true,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(30, 30, 40),
+		Text = "Frei",
+	}, gui)
+
+	return {
+		model = model,
+		slots = slots,
+		slotPrompts = slotPrompts,
+		pads = pads,
+		spawn = spawnPad,
+		spawnCFrame = origin * CFrame.new(0, 4, 1),
+		lamp = lamp,
+		light = light,
+		alarmSound = alarmSound,
+		sign = sign,
+		lampOffColor = COLOR_LAMP_OFF,
+	}
+end
+
+-- Baut die komplette Map unter Workspace/EiAlarm und gibt Verweise zurueck.
+function MapBuilder.build(config)
+	local M = config.Map
+
+	-- Standardteile der Baseplate-Vorlage stoeren die Map. Sie werden nur in der
+	-- laufenden Sitzung entfernt, die gespeicherte Place-Datei bleibt unveraendert.
+	for _, name in ipairs({ "Baseplate", "SpawnLocation" }) do
+		local default = workspace:FindFirstChild(name)
+		if default then
+			default:Destroy()
+		end
+	end
+	local previous = workspace:FindFirstChild("EiAlarm")
+	if previous then
+		previous:Destroy()
+	end
+	setupLighting()
+
+	local root = make("Folder", { Name = "EiAlarm" }, workspace)
+	-- Map: alles, was Sicht und Abfangen blockiert. Decor: reine Zierde.
+	local geometry = make("Folder", { Name = "Map" }, root)
+	local decor = make("Folder", { Name = "Decor" }, root)
+	local eggFolder = make("Folder", { Name = "Eggs" }, root)
+	local creatureFolder = make("Folder", { Name = "Creatures" }, root)
+
+	local outerHalf = M.HallHalf + M.WallThickness * 2 + M.VentWidth
+	block(geometry, "Floor", Vector3.new(outerHalf * 2, 1, outerHalf * 2), CFrame.new(0, -0.5, 0), COLOR_FLOOR)
+	-- Fliesenfugen, Leuchtring um die Mitte
+	for offset = -48, 48, 12 do
+		ghost(block(decor, "TileLine", Vector3.new(M.HallHalf * 2, 0.04, 0.3), CFrame.new(0, 0.02, offset), COLOR_TILE))
+		ghost(block(decor, "TileLine", Vector3.new(0.3, 0.04, M.HallHalf * 2), CFrame.new(offset, 0.02, 0), COLOR_TILE))
+	end
+	ghost(cylinder(decor, "CenterGlow", 44, 0.1, CFrame.new(0, 0.05, 0), COLOR_TRIM, Enum.Material.Neon))
+	ghost(cylinder(decor, "CenterDisc", 42, 0.12, CFrame.new(0, 0.07, 0), COLOR_CREAM))
+
+	local bases = {}
+	for baseId = 1, config.MaxBases do
+		local side = CFrame.Angles(0, math.rad(90 * (baseId - 1)), 0)
+		buildSide(geometry, decor, side, baseId, M)
+		bases[baseId] = buildBase(root, baseId, side, config)
+		-- Farbiger Weg von der Mitte zur Basis
+		local from, to = 21, M.BaseDistance - 13
+		ghost(block(decor, "Path", Vector3.new(6, 0.1, to - from), side * CFrame.new(0, 0.06, (from + to) / 2), rgb(M.BaseColors[baseId])))
+	end
+
+	-- Zentrale Eierstation: runde Plattform, runde Sockel, Leuchtsaeule.
+	-- Die Sockel selbst sind unsichtbare Quader, die Eier richten sich daran aus.
+	local station = make("Model", { Name = "EggStation" }, root)
+	cylinder(station, "Platform", 18, 0.4, CFrame.new(0, 0.2, 0), Color3.fromRGB(255, 250, 235))
+	local pedestals = {}
+	local corners = { { -4, -4 }, { 4, -4 }, { 4, 4 }, { -4, 4 } }
+	for index = 1, config.CenterPedestals do
+		local corner = corners[(index - 1) % #corners + 1]
+		local center = CFrame.new(corner[1], 1.4, corner[2])
+		local pedestal = block(station, "Pedestal" .. index, Vector3.new(3, 2, 3), center, COLOR_METAL, Enum.Material.Metal)
+		pedestal.Transparency = 1
+		pedestals[index] = pedestal
+		ghost(cylinder(station, "PedestalBody", 3, 2, center, COLOR_METAL, Enum.Material.Metal))
+		ghost(cylinder(station, "PedestalRing", 3.8, 0.2, center * CFrame.new(0, -0.9, 0), COLOR_TRIM, Enum.Material.Neon))
+	end
+	cylinder(station, "ColumnBase", 3, 1.5, CFrame.new(0, 1.15, 0), COLOR_METAL, Enum.Material.Metal)
+	local tube = ghost(cylinder(station, "ColumnGlass", 2.4, 8, CFrame.new(0, 5.9, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass))
+	tube.Transparency = 0.5
+	local core = ghost(ball(station, "ColumnCore", 1.8, CFrame.new(0, 6, 0), Color3.fromRGB(255, 230, 120), Enum.Material.Neon))
+	make("PointLight", { Color = Color3.fromRGB(255, 230, 150), Range = 30, Brightness = 1.5, Shadows = false }, core)
+	ghost(cylinder(station, "ColumnCap", 3, 0.6, CFrame.new(0, 10.2, 0), COLOR_METAL, Enum.Material.Metal))
+
+	return {
+		root = root,
+		geometry = geometry,
+		eggFolder = eggFolder,
+		creatureFolder = creatureFolder,
+		bases = bases,
+		pedestals = pedestals,
+	}
+end
+
+-- Platzhalter-Ei: eine gestreckte Kugel mit Prompt, Zeitanzeige und Diebstahl-Markierung.
+function MapBuilder.buildEgg(config, eggId)
+	local part = make("Part", {
+		Name = "Egg" .. eggId,
+		Size = Vector3.new(2.2, MapBuilder.EGG_HALF_HEIGHT * 2, 2.2),
+		Color = Color3.fromRGB(255, 244, 214),
+		Material = Enum.Material.SmoothPlastic,
+		Anchored = true,
+		CanCollide = false,
+		Massless = true,
+		TopSurface = Enum.SurfaceType.Smooth,
+		BottomSurface = Enum.SurfaceType.Smooth,
+	}, nil)
+	make("SpecialMesh", { MeshType = Enum.MeshType.Sphere }, part)
+	prompt(part, "Ei nehmen", "Labor-Ei", config)
+	make("Highlight", {
+		Name = "StolenHighlight",
+		FillColor = Color3.fromRGB(255, 60, 60),
+		OutlineColor = Color3.fromRGB(255, 255, 255),
+		FillTransparency = 0.5,
+		DepthMode = Enum.HighlightDepthMode.Occluded,
+		Enabled = false,
+	}, part)
+	local billboard = make("BillboardGui", {
+		Name = "Info",
+		Size = UDim2.new(0, 120, 0, 36),
+		StudsOffset = Vector3.new(0, 2.6, 0),
+		MaxDistance = 60,
+	}, part)
+	make("TextLabel", {
+		Name = "Label",
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		TextScaled = true,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextStrokeTransparency = 0.3,
+		Text = "",
+	}, billboard)
+	return part
+end
+
+-- Schlupfeffekt: unsichtbarer Traeger mit Partikelstoss und Knack-Sound.
+function MapBuilder.buildHatchBurst(config, position)
+	local part = make("Part", {
+		Name = "HatchBurst",
+		Size = Vector3.new(1, 1, 1),
+		CFrame = CFrame.new(position),
+		Transparency = 1,
+		Anchored = true,
+		CanCollide = false,
+	}, nil)
+	make("ParticleEmitter", {
+		Name = "Shards",
+		Rate = 0,
+		Lifetime = NumberRange.new(0.4, 0.8),
+		Speed = NumberRange.new(8, 14),
+		SpreadAngle = Vector2.new(180, 180),
+		Color = ColorSequence.new(Color3.fromRGB(255, 244, 214)),
+		Size = NumberSequence.new(0.5),
+	}, part)
+	sound(part, "Crack", config.Sounds.EggCrack)
+	return part
+end
+
+-- Platzhalter-Kreaturen aus runden Grundformen. Vorne ist -Z, der Drehpunkt liegt am Boden.
+local creatureBuilders = {}
+
+local function addEyes(model, y, z, spread)
+	for _, sign in ipairs({ -1, 1 }) do
+		ghost(ball(model, "EyeWhite", 0.8, CFrame.new(sign * spread, y, z), Color3.fromRGB(255, 255, 255)))
+		ghost(ball(model, "Pupil", 0.4, CFrame.new(sign * spread, y, z - 0.3), Color3.fromRGB(20, 20, 25)))
+	end
+end
+
+creatureBuilders["Waffelkrabbe"] = function(model)
+	local waffle = Color3.fromRGB(222, 170, 90)
+	local red = Color3.fromRGB(235, 90, 70)
+	local body = ghost(cylinder(model, "Body", 3.4, 0.9, CFrame.new(0, 1.1, 0), waffle))
+	ghost(cylinder(model, "Syrup", 2.4, 0.2, CFrame.new(0, 1.6, 0), Color3.fromRGB(150, 80, 30)))
+	ghost(ball(model, "Butter", 0.8, CFrame.new(0.3, 1.8, 0.2), Color3.fromRGB(255, 235, 140)))
+	for _, sign in ipairs({ -1, 1 }) do
+		ghost(pipe(model, "Arm", 0.5, 1.4, CFrame.new(sign * 2, 1.2, -0.7), red))
+		ghost(ball(model, "Claw", 1.4, CFrame.new(sign * 2.8, 1.4, -0.9), red))
+		for _, z in ipairs({ -0.8, 0, 0.8 }) do
+			ghost(ball(model, "Foot", 0.6, CFrame.new(sign * 1.5, 0.3, z), waffle))
+		end
+		ghost(cylinder(model, "EyeStalk", 0.25, 0.8, CFrame.new(sign * 0.6, 1.9, -1.2), waffle))
+	end
+	addEyes(model, 2.4, -1.2, 0.6)
+	return body
+end
+
+creatureBuilders["Toaster-Gecko"] = function(model)
+	local green = Color3.fromRGB(110, 190, 120)
+	local body = ghost(pipe(model, "Body", 2.4, 3, CFrame.new(0, 1.5, 0) * ALONG_Z, Color3.fromRGB(205, 210, 220), Enum.Material.Metal))
+	ghost(block(model, "Toast", Vector3.new(1.2, 0.9, 0.3), CFrame.new(0, 2.8, 0), Color3.fromRGB(200, 140, 70)))
+	ghost(ball(model, "Lever", 0.5, CFrame.new(1.3, 1.6, 0.6), Color3.fromRGB(40, 40, 50)))
+	ghost(ball(model, "Head", 1.9, CFrame.new(0, 1.6, -2.2), green))
+	ghost(pipe(model, "Tail", 0.8, 2.6, CFrame.new(0, 1, 2.6) * ALONG_Z, green))
+	ghost(ball(model, "TailTip", 0.9, CFrame.new(0, 1, 4), green))
+	for _, sign in ipairs({ -1, 1 }) do
+		ghost(ball(model, "Foot", 0.8, CFrame.new(sign * 1.3, 0.4, -0.9), green))
+		ghost(ball(model, "Foot", 0.8, CFrame.new(sign * 1.3, 0.4, 0.9), green))
+	end
+	addEyes(model, 2.2, -2.7, 0.55)
+	return body
+end
+
+creatureBuilders["Pudding-Golem"] = function(model)
+	local pudding = Color3.fromRGB(250, 214, 120)
+	local caramel = Color3.fromRGB(140, 75, 30)
+	local body = ghost(cylinder(model, "Body", 3.6, 2.4, CFrame.new(0, 1.2, 0), pudding))
+	ghost(cylinder(model, "Top", 2.6, 1.4, CFrame.new(0, 3.1, 0), pudding))
+	ghost(cylinder(model, "Caramel", 2.8, 0.4, CFrame.new(0, 4, 0), caramel))
+	ghost(ball(model, "Drip", 0.7, CFrame.new(1.2, 3.6, -0.6), caramel))
+	ghost(ball(model, "Drip", 0.6, CFrame.new(-1.1, 3.5, 0.7), caramel))
+	ghost(ball(model, "Cherry", 0.9, CFrame.new(0, 4.6, 0), Color3.fromRGB(220, 40, 60)))
+	for _, sign in ipairs({ -1, 1 }) do
+		ghost(ball(model, "Arm", 1.4, CFrame.new(sign * 2.2, 1.8, -0.2), pudding))
+	end
+	addEyes(model, 3.2, -1.3, 0.5)
+	return body
+end
+
+-- Baut eine Kreatur am Stellplatz cframe. Das Modell bleibt verankert,
+-- der Client bewegt es nur optisch.
+function MapBuilder.buildCreature(config, creatureId, cframe)
+	local builder = creatureBuilders[creatureId] or creatureBuilders["Waffelkrabbe"]
+	local model = Instance.new("Model")
+	model.Name = creatureId
+	local body = builder(model)
+	-- Kein PrimaryPart: so bleibt der Drehpunkt am Boden (WorldPivot) und
+	-- PivotTo stellt die Kreatur mit den Fuessen auf den Stellplatz.
+	model.WorldPivot = CFrame.new()
+	model:PivotTo(cframe)
+	model:SetAttribute("Kind", creatureId)
+	model:SetAttribute("Home", cframe)
+	local spec = config.Sounds[creatureId]
+	if spec then
+		sound(body, "Voice", spec)
+	end
+	return model
+end
+
+return MapBuilder
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX8"><Properties><string name="Name">CoreSelfTest</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – Selbsttest der Spielregeln (ModuleScript, nur Server).
+-- Laeuft beim Serverstart, wenn Config.RunSelfTests = true, und schreibt das
+-- Ergebnis in den Output. Die Tests arbeiten auf einer eigenen EggCore-Instanz
+-- und beruehren das laufende Spiel nicht.
+
+local CoreSelfTest = {}
+
+local A, B, C = 101, 102, 103 -- erfundene UserIds
+
+local function expect(condition, message)
+	if not condition then
+		error(message, 2)
+	end
+end
+
+-- Frisches Spiel: A und B haben je eine Basis mit Start-Ei, ein Ei liegt in der Mitte.
+local function setup(EggCore, Config)
+	local core = EggCore.new(Config)
+	local baseA = core:addPlayer(A)
+	local baseB = core:addPlayer(B)
+	local starterA = core:spawnStarterEgg(A)
+	local starterB = core:spawnStarterEgg(B)
+	local centerEgg = core:spawnCenterEgg(1)
+	return core, baseA, baseB, starterA, starterB, centerEgg
+end
+
+-- A holt ein Ei aus der Mitte und setzt es in Slot 2. Rueckgabe: eggId.
+local function incubateForA(core, baseA, centerEgg)
+	expect(core:take(A, centerEgg, 0), "A sollte das Ei aus der Mitte nehmen koennen")
+	expect(core:place(A, baseA, 2, 1), "A sollte das Ei in Slot 2 setzen koennen")
+	return centerEgg
+end
+
+local tests = {}
+
+tests["Zwei Spieler, ein Ei: nur der erste bekommt es"] = function(EggCore, Config)
+	local core, _, _, _, _, centerEgg = setup(EggCore, Config)
+	local okA, resultA = core:take(A, centerEgg, 5)
+	local okB, resultB = core:take(B, centerEgg, 5)
+	expect(okA and resultA == "Taken", "A sollte das Ei bekommen")
+	expect(not okB and resultB == "Busy", "B muss abgewiesen werden")
+	expect(core.eggs[centerEgg].carrier == A, "Traeger muss A sein")
+	expect(core.players[B].carrying == nil, "B darf nichts tragen")
+end
+
+tests["Zwei Diebe, ein Ei: nur der erste klaut es"] = function(EggCore, Config)
+	local core, baseA, _, _, _, centerEgg = setup(EggCore, Config)
+	core:addPlayer(C)
+	local egg = incubateForA(core, baseA, centerEgg)
+	local okB, resultB = core:take(B, egg, 10)
+	local okC, resultC = core:take(C, egg, 10)
+	expect(okB and resultB == "Stolen", "B sollte klauen koennen")
+	expect(not okC and resultC == "Busy", "C muss abgewiesen werden")
+	expect(core.bases[baseA].slots[2] == egg, "Heimat-Slot bleibt waehrend der Flucht reserviert")
+end
+
+tests["Start-Ei ist geschuetzt, eigenes Ei ist nicht klaubar"] = function(EggCore, Config)
+	local core, baseA, _, starterA, _, centerEgg = setup(EggCore, Config)
+	local ok, reason = core:take(B, starterA, 0)
+	expect(not ok and reason == "Protected", "Start-Ei darf nicht geklaut werden")
+	local egg = incubateForA(core, baseA, centerEgg)
+	ok, reason = core:take(A, egg, 2)
+	expect(not ok and reason == "OwnEgg", "eigenes Ei darf nicht genommen werden")
+end
+
+tests["Nur ein Ei gleichzeitig tragen"] = function(EggCore, Config)
+	local core, _, _, _, _, centerEgg = setup(EggCore, Config)
+	local second = core:spawnCenterEgg(2)
+	expect(core:take(A, centerEgg, 0), "erstes Ei")
+	local ok, reason = core:take(A, second, 0)
+	expect(not ok and reason == "HandsFull", "zweites Ei muss abgewiesen werden")
+end
+
+tests["Geklautes Ei sichern: Besitz wechselt"] = function(EggCore, Config)
+	local core, baseA, baseB, _, _, centerEgg = setup(EggCore, Config)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	expect(core.eggs[egg].stolen, "Ei muss als geklaut markiert sein")
+	local ok, result, wasStolen, victim = core:place(B, baseB, 2, 20)
+	expect(ok and result == "Placed" and wasStolen and victim == A, "B sichert das Ei")
+	expect(core.eggs[egg].owner == B, "Ei gehoert jetzt B")
+	expect(not core.eggs[egg].stolen, "Diebstahl ist abgeschlossen")
+	expect(core.bases[baseA].slots[2] == nil, "Slot bei A ist wieder frei")
+	expect(core.bases[baseB].slots[2] == egg, "Ei sitzt bei B")
+	expect(core.eggs[egg].remaining >= Config.MinIncubationAfterSteal, "Mindestbrutzeit nach Diebstahl")
+end
+
+tests["Einsetzen nur in freie Slots der eigenen Basis"] = function(EggCore, Config)
+	local core, baseA, baseB, _, _, centerEgg = setup(EggCore, Config)
+	expect(core:take(A, centerEgg, 0), "A nimmt Ei")
+	local ok, reason = core:place(A, baseB, 2, 1)
+	expect(not ok and reason == "NotYourBase", "fremde Basis muss abgewiesen werden")
+	ok, reason = core:place(A, baseA, 1, 1)
+	expect(not ok and reason == "SlotTaken", "belegter Slot muss abgewiesen werden")
+	ok, reason = core:place(A, baseA, 99, 1)
+	expect(not ok and reason == "BadSlot", "ungueltiger Slot muss abgewiesen werden")
+	ok, reason = core:place(B, baseB, 2, 1)
+	expect(not ok and reason == "NoEgg", "ohne Ei kein Einsetzen")
+end
+
+tests["Abfangen: Ei faellt, Besitzer holt es zurueck"] = function(EggCore, Config)
+	local core, baseA, _, _, _, centerEgg = setup(EggCore, Config)
+	core:addPlayer(C)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	local ok, reason = core:tag(C, B, "pos", 11)
+	expect(not ok and reason == "NotOwner", "nur der Besitzer darf abfangen")
+	expect(core:tag(A, B, "pos", 12), "A faengt B ab")
+	expect(core.eggs[egg].state == "Dropped", "Ei liegt am Boden")
+	expect(core.eggs[egg].dropPos == "pos", "Fallposition gemerkt")
+	expect(core.players[B].carrying == nil, "B traegt nichts mehr")
+	ok, reason = core:take(B, egg, 12.5)
+	expect(not ok and reason == "Stunned", "abgefangener Dieb ist kurz gesperrt")
+	local okA, resultA = core:take(A, egg, 13)
+	expect(okA and resultA == "Recovered", "A holt das Ei zurueck")
+	expect(core.eggs[egg].state == "Incubating", "Ei bruetet wieder")
+	expect(core.eggs[egg].home.base == baseA and core.eggs[egg].home.slot == 2, "Ei ist im alten Slot")
+	expect(core.eggs[egg].owner == A and not core.eggs[egg].stolen, "Ei gehoert weiter A")
+end
+
+tests["Dieb darf nach der Sperre wieder zugreifen"] = function(EggCore, Config)
+	local core, baseA, _, _, _, centerEgg = setup(EggCore, Config)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	expect(core:tag(A, B, "pos", 12), "A faengt B ab")
+	local ok, result = core:take(B, egg, 12 + Config.StunTime + 0.1)
+	expect(ok and result == "Taken", "B hebt das Ei wieder auf")
+	expect(core.eggs[egg].stolen and core.eggs[egg].owner == A, "Diebstahl laeuft weiter")
+end
+
+tests["Verbindungsabbruch des Diebs: Ei kehrt zur Station zurueck"] = function(EggCore, Config)
+	local core, baseA, baseB, _, starterB, centerEgg = setup(EggCore, Config)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	expect(core:removePlayer(B, 11), "B verlaesst das Spiel")
+	local state = core.eggs[egg]
+	expect(state ~= nil, "Ei existiert weiter")
+	expect(state.state == "Incubating", "Ei bruetet wieder")
+	expect(state.home.base == baseA and state.home.slot == 2, "Ei ist in der urspruenglichen Station")
+	expect(state.owner == A and state.carrier == nil and not state.stolen, "Ei gehoert A, niemand traegt es")
+	expect(core.bases[baseA].slots[2] == egg, "Slot bei A haelt das Ei")
+	expect(core.eggs[starterB] == nil, "Eier von B sind entfernt")
+	expect(core.bases[baseB].owner == nil, "Basis von B ist frei")
+end
+
+tests["Verbindungsabbruch mit Ei aus der Mitte: Ei liegt wieder auf dem Sockel"] = function(EggCore, Config)
+	local core, _, _, _, _, centerEgg = setup(EggCore, Config)
+	expect(core:take(B, centerEgg, 0), "B nimmt Ei")
+	core:removePlayer(B, 1)
+	expect(core.eggs[centerEgg].state == "Center", "Ei ist zurueck in der Mitte")
+	expect(core.center[1] == centerEgg, "Sockel haelt das Ei")
+end
+
+tests["Opfer geht waehrend der Flucht: Ei wird herrenlos"] = function(EggCore, Config)
+	local core, baseA, baseB, _, _, centerEgg = setup(EggCore, Config)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	core:removePlayer(A, 11)
+	expect(core.eggs[egg].home == nil and core.eggs[egg].owner == nil, "Ei hat keine Heimat mehr")
+	expect(not core.eggs[egg].stolen, "kein Alarm mehr")
+	expect(core:place(B, baseB, 2, 12), "B darf das Ei behalten")
+	expect(core.eggs[egg].owner == B, "Ei gehoert B")
+end
+
+tests["Zeitlimit: Ei kehrt von selbst zurueck"] = function(EggCore, Config)
+	local core, baseA, _, _, _, centerEgg = setup(EggCore, Config)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	expect(#core:expire(10 + Config.TransitTimeout - 1) == 0, "noch nicht abgelaufen")
+	local expired = core:expire(10 + Config.TransitTimeout)
+	expect(#expired == 1 and expired[1].eggId == egg and expired[1].carrier == B, "Flucht laeuft ab")
+	expect(core.eggs[egg].state == "Incubating" and core.players[B].carrying == nil, "Ei ist zurueck")
+
+	expect(core:take(B, egg, 100), "B klaut erneut")
+	expect(core:tag(A, B, "pos", 101), "A faengt B ab")
+	expect(#core:expire(101 + Config.DropTimeout) == 1, "liegendes Ei laeuft ab")
+	expect(core.eggs[egg].state == "Incubating", "Ei ist zurueck")
+end
+
+tests["Tod des Traegers: geklautes Ei faellt, neutrales kehrt heim"] = function(EggCore, Config)
+	local core, baseA, _, _, _, centerEgg = setup(EggCore, Config)
+	local neutral = core:spawnCenterEgg(2)
+	local egg = incubateForA(core, baseA, centerEgg)
+	expect(core:take(B, egg, 10), "B klaut")
+	expect(core:release(B, "pos", 11), "B stirbt")
+	expect(core.eggs[egg].state == "Dropped", "geklautes Ei liegt am Boden")
+	expect(core:take(A, neutral, 12), "A nimmt neutrales Ei")
+	expect(core:release(A, "pos", 13), "A stirbt")
+	expect(core.eggs[neutral].state == "Center", "neutrales Ei ist zurueck in der Mitte")
+end
+
+tests["Schlupf: Kreatur ist sicher und verdient Muenzen"] = function(EggCore, Config)
+	local core, baseA, _, starterA = setup(EggCore, Config)
+	expect(#core:tick(Config.StarterIncubation - 1) == 0, "noch nicht bereit")
+	local ready = core:tick(1)
+	expect(#ready == 2, "beide Start-Eier sind bereit")
+	expect(core:beginHatch(starterA), "Schlupf beginnt")
+	local ok, reason = core:take(B, starterA, 20)
+	expect(not ok, "schluepfendes Ei ist nicht greifbar: " .. tostring(reason))
+	local done, creatureId, pad, owner, baseId = core:finishHatch(starterA, 0)
+	expect(done and creatureId == Config.Creatures[1].id, "Wurf 0 ergibt die erste Kreatur")
+	expect(pad == 1 and owner == A and baseId == baseA, "Kreatur landet in der Basis von A")
+	expect(core.eggs[starterA] == nil and core.bases[baseA].slots[1] == nil, "Ei weg, Slot frei")
+	expect(not core:finishHatch(starterA, 0), "kein doppelter Schlupf")
+	core:payout()
+	core:payout()
+	expect(core.players[A].coins == 2 * Config.Creatures[1].coinsPerSecond, "A verdient Muenzen")
+	expect(core.players[B].coins == 0, "B hat noch keine Kreatur")
+	expect(core:pickCreature(0.999).id == Config.Creatures[#Config.Creatures].id, "hoher Wurf ergibt die seltenste Kreatur")
+end
+
+tests["Fuenfter Spieler bekommt keine Basis"] = function(EggCore, Config)
+	local core = EggCore.new(Config)
+	for userId = 1, Config.MaxBases do
+		expect(core:addPlayer(userId) == userId, "Basis " .. userId)
+	end
+	expect(core:addPlayer(999) == nil, "kein Platz mehr")
+	core:removePlayer(2, 0)
+	expect(core:addPlayer(999) == 2, "frei gewordene Basis wird neu vergeben")
+end
+
+tests["Mitte fuellt sich nach der Wartezeit wieder auf"] = function(EggCore, Config)
+	local core = EggCore.new(Config)
+	core:addPlayer(A)
+	expect(#core:fillCenter(0) == Config.CenterPedestals, "alle Sockel gefuellt")
+	local egg = core.center[1]
+	expect(core:take(A, egg, 1), "A nimmt Ei")
+	expect(#core:fillCenter(50) == 0, "Sockel bleibt reserviert, solange das Ei unterwegs ist")
+	expect(core:place(A, 1, 1, 60), "A setzt Ei ein")
+	expect(#core:fillCenter(60 + Config.CenterRespawn - 1) == 0, "Wartezeit laeuft")
+	expect(#core:fillCenter(60 + Config.CenterRespawn) == 1, "neues Ei erscheint")
+end
+
+-- Fuehrt alle Tests aus. Rueckgabe: Anzahl bestanden, Anzahl fehlgeschlagen, Liste der Fehler.
+function CoreSelfTest.run(EggCore, Config, log)
+	log = log or print
+	local names = {}
+	for name in pairs(tests) do
+		names[#names + 1] = name
+	end
+	table.sort(names)
+	local passed, failures = 0, {}
+	for _, name in ipairs(names) do
+		local ok, err = pcall(tests[name], EggCore, Config)
+		if ok then
+			passed = passed + 1
+		else
+			failures[#failures + 1] = name .. ": " .. tostring(err)
+		end
+	end
+	for _, failure in ipairs(failures) do
+		log("[Ei-Alarm][Selbsttest] FEHLER  " .. failure)
+	end
+	log(string.format("[Ei-Alarm][Selbsttest] %d bestanden, %d fehlgeschlagen", passed, #failures))
+	return passed, #failures, failures
+end
+
+return CoreSelfTest
+]]></ProtectedString></Properties></Item>
+</Item>
+</Item>
+<Item class="StarterPlayer" referent="RBX13"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts" referent="RBX12"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="LocalScript" referent="RBX11"><Properties><string name="Name">EiAlarmClient</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – Clientskript (LocalScript in StarterPlayer/StarterPlayerScripts).
+--
+-- Nur Anzeige: Hinweisbanner, passende Prompts, zappelndes Ei und die
+-- Platzhalter-Bewegungen der Kreaturen. Der Client entscheidet nichts.
+-- Alles, was hier laeuft, darf manipuliert werden, ohne dass jemand einen
+-- Vorteil bekommt.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local sharedFolder = ReplicatedStorage:WaitForChild("EiAlarm")
+local Config = require(sharedFolder:WaitForChild("Config"))
+local notifyEvent = sharedFolder:WaitForChild("Remotes"):WaitForChild("Notify")
+local world = workspace:WaitForChild("EiAlarm")
+local eggFolder = world:WaitForChild("Eggs")
+local creatureFolder = world:WaitForChild("Creatures")
+
+local CARRY_OFFSET = CFrame.new(Config.CarryOffset[1], Config.CarryOffset[2], Config.CarryOffset[3])
+
+-- Hinweisbanner ----------------------------------------------------------------
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "EiAlarmHud"
+gui.ResetOnSpawn = false
+
+local banner = Instance.new("TextLabel")
+banner.Name = "Banner"
+banner.AnchorPoint = Vector2.new(0.5, 0)
+banner.Position = UDim2.new(0.5, 0, 0.1, 0)
+banner.Size = UDim2.new(0.7, 0, 0, 44)
+banner.BackgroundTransparency = 0.15
+banner.TextColor3 = Color3.fromRGB(255, 255, 255)
+banner.Font = Enum.Font.GothamBold
+banner.TextScaled = true
+banner.Visible = false
+banner.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = banner
+
+local padding = Instance.new("UIPadding")
+padding.PaddingTop = UDim.new(0, 8)
+padding.PaddingBottom = UDim.new(0, 8)
+padding.PaddingLeft = UDim.new(0, 12)
+padding.PaddingRight = UDim.new(0, 12)
+padding.Parent = banner
+
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local BANNER_COLORS = {
+	info = Color3.fromRGB(45, 60, 90),
+	good = Color3.fromRGB(40, 120, 70),
+	warn = Color3.fromRGB(170, 110, 20),
+	alarm = Color3.fromRGB(190, 30, 30),
+}
+
+local bannerToken = 0
+notifyEvent.OnClientEvent:Connect(function(text, kind)
+	bannerToken = bannerToken + 1
+	local token = bannerToken
+	banner.Text = text
+	banner.BackgroundColor3 = BANNER_COLORS[kind] or BANNER_COLORS.info
+	banner.Visible = true
+	local duration = 2.5
+	if kind == "alarm" then
+		duration = 4
+	end
+	task.delay(duration, function()
+		if bannerToken == token then
+			banner.Visible = false
+		end
+	end)
+end)
+
+-- Prompts ------------------------------------------------------------------
+-- Der Server schaltet Prompts fuer alle frei (Attribut PromptOn). Hier werden
+-- nur die ausgeblendet, die fuer diesen Spieler keinen Sinn ergeben. Der
+-- Server prueft trotzdem jede Aktion selbst.
+
+local function setPrompt(prompt, enabled)
+	if prompt.Enabled ~= enabled then
+		prompt.Enabled = enabled
+	end
+end
+
+local function updatePrompts()
+	local myId = player.UserId
+	local eggs = eggFolder:GetChildren()
+	local carrying = false
+	for _, egg in ipairs(eggs) do
+		if egg:GetAttribute("Carrier") == myId then
+			carrying = true
+		end
+	end
+
+	for _, egg in ipairs(eggs) do
+		local prompt = egg:FindFirstChild("Prompt")
+		if prompt then
+			local ownBrooding = egg:GetAttribute("State") == "Incubating" and egg:GetAttribute("Owner") == myId
+			setPrompt(prompt, egg:GetAttribute("PromptOn") == true and not ownBrooding and not carrying)
+		end
+	end
+
+	for _, base in ipairs(world:GetChildren()) do
+		if base:IsA("Model") and base:GetAttribute("Owner") ~= nil then
+			local mine = base:GetAttribute("Owner") == myId
+			for _, slot in ipairs(base:GetChildren()) do
+				local prompt = slot:FindFirstChild("Prompt")
+				if prompt then
+					setPrompt(prompt, mine and carrying and slot:GetAttribute("PromptOn") == true)
+				end
+			end
+		end
+	end
+end
+
+-- Zappelndes Ei ----------------------------------------------------------------
+
+local function updateCarriedEggs(t)
+	for _, egg in ipairs(eggFolder:GetChildren()) do
+		local weld = egg:FindFirstChild("CarryWeld")
+		if weld then
+			if egg:GetAttribute("Stolen") then
+				weld.C0 = CARRY_OFFSET * CFrame.Angles(math.sin(t * 31) * 0.16, 0, math.sin(t * 23) * 0.2)
+			elseif weld.C0 ~= CARRY_OFFSET then
+				weld.C0 = CARRY_OFFSET
+			end
+		end
+	end
+end
+
+-- Kreaturen ------------------------------------------------------------------
+-- Platzhalter-Bewegungen, bis die Blender-Animationen importiert sind.
+
+local creatureState = setmetatable({}, { __mode = "k" })
+
+local function stateOf(model)
+	local state = creatureState[model]
+	if not state then
+		state = { startledAt = -10, nextStartle = 0 }
+		creatureState[model] = state
+	end
+	return state
+end
+
+-- Dreieckslauf 0,1,2,3,4,3,2,1,... fuer das Hin und Her des Golems.
+local function triangle(step)
+	local cycle = step % 8
+	if cycle <= 4 then
+		return cycle
+	end
+	return 8 - cycle
+end
+
+local function spitToast(model, home)
+	local toast = Instance.new("Part")
+	toast.Name = "Toast"
+	toast.Size = Vector3.new(1.2, 0.3, 1.2)
+	toast.Color = Color3.fromRGB(200, 140, 70)
+	toast.Material = Enum.Material.SmoothPlastic
+	toast.CanCollide = false
+	toast.CFrame = home * CFrame.new(0, 3, 0)
+	toast.Parent = workspace
+	toast.AssemblyLinearVelocity = Vector3.new(math.random(-6, 6), 30, math.random(-6, 6))
+	toast.AssemblyAngularVelocity = Vector3.new(8, 0, 6)
+	Debris:AddItem(toast, 2)
+	local voice = model:FindFirstChild("Voice", true)
+	if voice then
+		voice:Play()
+	end
+end
+
+-- Der Gecko erschrickt, wenn der Alarm seiner Basis laeuft oder ein fremder
+-- Spieler nah herankommt.
+local function isStartled(model, home)
+	local base = world:FindFirstChild("Base" .. tostring(model:GetAttribute("Base")))
+	if base and base:GetAttribute("Alarm") then
+		return true
+	end
+	local ownerId = model:GetAttribute("Owner")
+	for _, other in ipairs(Players:GetPlayers()) do
+		local character = other.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if root and other.UserId ~= ownerId and (root.Position - home.Position).Magnitude < 9 then
+			return true
+		end
+	end
+	return false
+end
+
+local function animateCreature(model, t)
+	local home = model:GetAttribute("Home")
+	local kind = model:GetAttribute("Kind")
+	if not home or not kind then
+		return
+	end
+	local offset = (home.Position.X * 0.37 + home.Position.Z * 0.11) % 6.28
+
+	if kind == "Waffelkrabbe" then
+		-- Huepft seitwaerts hin und her.
+		local phase = t * 2.2 + offset
+		model:PivotTo(home * CFrame.new(math.sin(phase * 0.5) * 2, math.abs(math.sin(phase * 2)) * 0.9, 0))
+	elseif kind == "Toaster-Gecko" then
+		-- Steht ruhig, springt beim Erschrecken hoch und spuckt Toast.
+		local state = stateOf(model)
+		if t >= state.nextStartle and isStartled(model, home) then
+			state.startledAt = t
+			state.nextStartle = t + 3
+			spitToast(model, home)
+		end
+		local since = t - state.startledAt
+		local y = 0
+		if since < 0.45 then
+			y = math.sin(since / 0.45 * math.pi) * 1.4
+		end
+		model:PivotTo(home * CFrame.new(0, y, 0))
+	elseif kind == "Pudding-Golem" then
+		-- Stapft in Schritten vor und zurueck und wackelt nach jedem Schritt aus.
+		local stepTime = 0.9
+		local clock = t + offset
+		local step = math.floor(clock / stepTime)
+		local since = clock - step * stepTime
+		local blend = math.min(since / 0.3, 1)
+		local position = triangle(step - 1) + (triangle(step) - triangle(step - 1)) * blend
+		local wobble = math.sin(since * 22) * math.exp(-since * 4.5) * 0.22
+		model:PivotTo(home * CFrame.new(0, 0, -position * 0.5) * CFrame.Angles(wobble, 0, wobble * 0.6))
+	end
+end
+
+-- Takt -----------------------------------------------------------------------
+
+local promptTimer = 0
+RunService.RenderStepped:Connect(function(dt)
+	local t = os.clock()
+	updateCarriedEggs(t)
+	for _, model in ipairs(creatureFolder:GetChildren()) do
+		animateCreature(model, t)
+	end
+	promptTimer = promptTimer + dt
+	if promptTimer >= 0.1 then
+		promptTimer = 0
+		updatePrompts()
+	end
+end)
+]]></ProtectedString></Properties></Item>
+</Item>
+</Item>
+</roblox>

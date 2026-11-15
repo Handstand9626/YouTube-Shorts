@@ -44,6 +44,11 @@ Zur Laufzeit legt der Server zusätzlich an: `ReplicatedStorage/EiAlarm/Remotes/
 
 ## Einbau in Roblox Studio
 
+Schnellster Weg: die fertige Place-Datei `Ei-Alarm.rbxlx` in Roblox Studio öffnen (**File → Open from File** oder die Datei auf das Studio-Fenster ziehen). Sie enthält alle Skripte am richtigen Platz und hat StreamingEnabled ausgeschaltet. Nach Änderungen an den Skripten erzeugt `python tools/build_place.py` die Datei neu. Die Place-Datei wurde noch nicht in Studio geöffnet.
+
+Von Hand geht es so:
+
+
 1. Neues Projekt mit der Vorlage **Baseplate** anlegen.
 2. Im Explorer auf **ReplicatedStorage** rechtsklicken, **Insert Object → Folder**, umbenennen in `EiAlarm`. Darin ein **ModuleScript** anlegen, `Config` nennen, den Inhalt löschen und den Inhalt von `Config.luau` einfügen.
 3. In **ServerScriptService** einen Folder `EiAlarm` anlegen. Darin drei **ModuleScripts** (`EggCore`, `MapBuilder`, `CoreSelfTest`) und ein **Script** (`Main`) anlegen und jeweils den Inhalt der passenden Datei einfügen. Die Namen müssen exakt stimmen, `Main` lädt die Module über diese Namen.

@@ -188,9 +188,9 @@ return function(sourceRoot)
 	-- Enums ----------------------------------------------------------------
 
 	local ENUMS = {
-		Material = { "SmoothPlastic", "Metal", "Neon" },
+		Material = { "SmoothPlastic", "Metal", "Neon", "Glass" },
 		SurfaceType = { "Smooth" },
-		PartType = { "Ball", "Block" },
+		PartType = { "Ball", "Block", "Cylinder" },
 		RollOffMode = { "InverseTapered" },
 		NormalId = { "Front" },
 		Font = { "GothamBold" },
@@ -248,7 +248,10 @@ return function(sourceRoot)
 		Script = "",
 		LocalScript = "",
 		PlayerGui = "",
-		Service = "LocalPlayer",
+		Service = "LocalPlayer ClockTime Brightness Ambient OutdoorAmbient",
+		Atmosphere = "Density Offset Haze Color",
+		BloomEffect = "Intensity Size Threshold",
+		ColorCorrectionEffect = "Saturation Contrast",
 	}
 	local SIGNALS = {
 		Triggered = true, Died = true, CharacterAdded = true, CharacterRemoving = true,
@@ -478,6 +481,7 @@ return function(sourceRoot)
 		TweenService = service("TweenService"),
 		Debris = service("Debris"),
 		Workspace = service("Workspace"),
+		Lighting = service("Lighting"),
 	}
 	local playerList = {}
 	rawset(services.Players, "GetPlayers", function()
