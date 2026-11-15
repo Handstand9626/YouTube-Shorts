@@ -1,0 +1,101 @@
+{
+  "title": "Bubble Wrap Was Invented as Wallpaper 📦 #shorts",
+  "description": "Bubble wrap was never meant for packaging. In 1957, engineers Alfred Fielding and Marc Chavannes sealed two shower curtains together to create a textured wallpaper – and it flopped. So did their next idea, greenhouse insulation. In 1960 they founded Sealed Air, and IBM became one of the first big customers, using it to ship the IBM 1401 computer. Today there is even a Bubble Wrap Appreciation Day on the last Monday of January.\n\nSources: Smithsonian Magazine, Mental Floss, Wikipedia (Bubble Wrap), National Day Calendar, Christian Science Monitor\n\n#shorts #facts #crazyfacts #inventions #bubblewrap #didyouknow",
+  "tags": [
+    "facts",
+    "crazy facts",
+    "bubble wrap",
+    "inventions",
+    "history",
+    "everyday objects",
+    "did you know",
+    "shorts"
+  ],
+  "comment": "Be honest: can you hold bubble wrap without popping it? 📦👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "Bubble wrap was never meant to protect anything. It was invented as wallpaper.",
+      "anim": "title",
+      "headline": "BUBBLE WRAP\nWAS INVENTED\nAS WALLPAPER",
+      "emoji": [
+        "📦",
+        "🏠"
+      ]
+    },
+    {
+      "text": "In nineteen fifty-seven, two engineers, Alfred Fielding and Marc Chavannes, wanted to make a trendy textured wallpaper.",
+      "anim": "pop",
+      "emoji": [
+        "🔧",
+        "🏠",
+        "🎨"
+      ]
+    },
+    {
+      "text": "So they sealed two plastic shower curtains together, and trapped air bubbles in between.",
+      "anim": "stat",
+      "to": 2,
+      "label": "SHOWER CURTAINS",
+      "emoji": [
+        "🚿",
+        "🫧"
+      ]
+    },
+    {
+      "text": "But nobody wanted bubbly walls. The wallpaper was a total flop.",
+      "anim": "shake",
+      "emoji": [
+        "🏠",
+        "👎"
+      ]
+    },
+    {
+      "text": "Next, they tried to sell it as greenhouse insulation. That failed too.",
+      "anim": "rain",
+      "emoji": [
+        "🌱",
+        "🏡"
+      ],
+      "drop": "💧"
+    },
+    {
+      "text": "In nineteen sixty, they founded a company called Sealed Air, and finally tried packaging.",
+      "anim": "timeline",
+      "points": [
+        {
+          "year": "1957",
+          "label": "Wallpaper",
+          "emoji": "🏠"
+        },
+        {
+          "year": "1960",
+          "label": "Sealed Air",
+          "emoji": "🏭"
+        }
+      ],
+      "gap": "3 years of flops"
+    },
+    {
+      "text": "IBM needed to ship its new fourteen-oh-one computer safely, and became one of the first big customers.",
+      "anim": "zoom",
+      "emoji": [
+        "💻",
+        "📦"
+      ],
+      "orbit": "🫧"
+    },
+    {
+      "text": "Today, bubble wrap even has its own holiday, on the last Monday of January.",
+      "anim": "pop",
+      "emoji": [
+        "📦",
+        "🎉"
+      ]
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
