@@ -25,22 +25,19 @@ Eine USB- oder Bluetooth-Tastatur macht das Tippen deutlich einfacher.
 2. **Discover** öffnen.
 3. Nach **Firefox** suchen und **Installieren** wählen.
 
-### Schritt 3: Programm herunterladen
+### Schritt 3 und 4: Programm herunterladen und entpacken
 
-1. Firefox öffnen und das GitHub-Repository öffnen:
-   `https://github.com/Handstand9626/YouTube-Shorts`
-2. Bei Bedarf bei GitHub anmelden.
-3. Oben links auf die Branch-Auswahl (zeigt `main`) tippen und
-   **`ccr-fa89e440-l707bl`** wählen.
-4. Grünen Knopf **Code** → **Download ZIP** wählen.
-5. Die Datei landet im Ordner **Downloads**.
+Achtung: Der Branch `main` enthält das Programm **nicht**. Am einfachsten lädst du
+den richtigen Stand direkt in der Konsole herunter (Konsole öffnen: siehe Schritt 6).
+Jede Zeile einzeln eingeben und mit Enter bestätigen:
 
-### Schritt 4: ZIP-Datei entpacken
+```
+cd ~/Downloads
+curl -L -o ki-trader.zip https://github.com/Handstand9626/YouTube-Shorts/archive/refs/heads/ccr-fa89e440-l707bl.zip
+python3 -m zipfile -e ki-trader.zip .
+```
 
-1. Den Dateimanager **Dolphin** öffnen (Ordner-Symbol in der Taskleiste).
-2. Links **Downloads** wählen.
-3. Rechtsklick (linker Trigger **L2**) auf die ZIP-Datei → **Entpacken** → **Hier entpacken**.
-4. Es entsteht der Ordner `YouTube-Shorts-ccr-fa89e440-l707bl`.
+Es entsteht der Ordner `YouTube-Shorts-ccr-fa89e440-l707bl`.
 
 ### Schritt 5: Ruhezustand ausschalten
 
@@ -83,16 +80,10 @@ Es muss eine Zeile wie `Python 3.11.x` (oder höher) erscheinen.
 Nur auf dem Steam Deck ansehen:
 
 ```
-./start.sh
+python3 start.py
 ```
 
 Zusätzlich auf dem Handy ansehen:
-
-```
-./start.sh --handy
-```
-
-Erscheint `Permission denied`, stattdessen eingeben:
 
 ```
 python3 start.py --handy
@@ -134,7 +125,7 @@ Zum Beispiel durch Spielmodus, Neustart oder leeren Akku:
 
    ```
    cd ~/Downloads/YouTube-Shorts-ccr-fa89e440-l707bl/ki-crypto-trader
-   ./start.sh --handy
+   python3 start.py --handy
    ```
 
 Der Test läuft mit dem gespeicherten Stand weiter. Das Testende bleibt gleich.
@@ -155,7 +146,7 @@ Die Pause wird im Dashboard und im Bericht vermerkt.
 
 ```
 cd ~/Downloads/YouTube-Shorts-ccr-fa89e440-l707bl/ki-crypto-trader
-./start.sh --neu
+python3 start.py --neu
 ```
 
 Der alte Test wird nicht gelöscht, sondern nach `data/archiv/` verschoben.
@@ -167,8 +158,7 @@ Der alte Test wird nicht gelöscht, sondern nach `data/archiv/` verschoben.
 | Problem | Lösung |
 |---|---|
 | `No such file or directory` bei `cd` | Ordnername in Dolphin prüfen und im Befehl anpassen. |
-| `Permission denied` bei `./start.sh` | `python3 start.py` statt `./start.sh` verwenden. |
 | `Es läuft bereits ein KI Crypto Trader …` | Es ist schon ein Konsolenfenster mit dem Test offen. Dieses benutzen. |
-| `Port 8000 … konnte nicht starten` | `./start.sh --port 8001` und dann `http://localhost:8001` öffnen. |
+| `Port 8000 … konnte nicht starten` | `python3 start.py --port 8001` und dann `http://localhost:8001` öffnen. |
 | Handy findet die Adresse nicht | Gleiches WLAN prüfen. Mit `--handy` gestartet? |
 | Dashboard zeigt „Pausiert aufgrund fehlender Daten“ | WLAN-Verbindung prüfen. Das Programm versucht es automatisch weiter. |
