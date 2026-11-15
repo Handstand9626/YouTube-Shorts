@@ -1,0 +1,18 @@
+{
+  "title": "A Bee Makes Just 1/12 Teaspoon of Honey in Her Life 🐝 #shorts",
+  "description": "A worker honey bee makes only about 1/12 of a teaspoon of honey in her whole life of roughly six weeks. For a single pound of honey, a hive taps about 2 million flowers and flies around 55,000 miles – more than twice around the Earth – at about 15 miles per hour.\n\nSources: PBS NOVA (Tales from the Hive), Chesapeake Bay Program, American Bee Journal, Canadian Honey Council\n\n#shorts #facts #crazyfacts #bees #honey #didyouknow",
+  "tags": ["facts", "crazy facts", "bees", "honey", "honey bee", "food", "did you know", "shorts"],
+  "comment": "Will you ever look at a spoonful of honey the same way again? 🍯👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "A honey bee works her whole life for just one twelfth of a teaspoon of honey.", "anim": "title", "headline": "A WHOLE LIFE\nFOR ONE DROP\nOF HONEY", "emoji": ["🐝", "🍯"]},
+    {"text": "Worker bees are all female, and in summer they live for only about six weeks.", "anim": "stat", "to": 6, "suffix": " weeks", "label": "ONE BEE LIFE", "emoji": ["🐝", "⏳"]},
+    {"text": "On a single trip, one bee visits around fifty to one hundred flowers.", "anim": "rain", "emoji": ["🐝", "🌼"], "drop": "🌸"},
+    {"text": "She flies at about fifteen miles per hour, back and forth, all day long.", "anim": "run", "emoji": ["🐝"], "trail": "💨"},
+    {"text": "To make just one pound of honey, a hive has to tap about two million flowers.", "anim": "count", "to": 2, "label": "MILLION FLOWERS", "emoji": ["🌼"], "under": "🌱"},
+    {"text": "Together, the bees fly around fifty-five thousand miles for that one pound.", "anim": "stat", "to": 55000, "suffix": " miles", "label": "FOR ONE POUND", "emoji": ["🍯", "🐝"]},
+    {"text": "That is more than twice around the whole Earth, for a single jar!", "anim": "zoom", "emoji": ["🌍", "🍯"], "orbit": "🐝"},
+    {"text": "So the next spoonful of honey you eat is the life's work of about twelve bees.", "anim": "versus", "sides": [{"emoji": "🥄", "label": "1 teaspoon", "value": "of honey"}, {"emoji": "🐝", "label": "12 bees", "value": "whole lives"}]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
