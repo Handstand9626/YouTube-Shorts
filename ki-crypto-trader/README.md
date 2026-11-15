@@ -88,6 +88,12 @@ Der alte Test wird nicht gelöscht, sondern nach `data/archiv/` verschoben.
 
 ---
 
+## Auf dem Steam Deck (SteamOS)
+
+Eigene Schritt-für-Schritt-Anleitung: [ANLEITUNG-STEAMDECK.md](ANLEITUNG-STEAMDECK.md)
+
+---
+
 ## Auf dem Handy
 
 Das Programm läuft auf dem Computer, das Handy zeigt das Dashboard als App an.
