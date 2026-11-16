@@ -16,10 +16,10 @@ Config.SlotsPerBase = 3
 Config.CreatureCap = 8
 
 -- Bewegung (Studs pro Sekunde)
-Config.WalkSpeed = 16
-Config.CarrySpeedHall = 13 -- offene Halle: kurz, aber das zappelnde Ei bremst
-Config.CarrySpeedVent = 16 -- Lueftung: laengerer Weg, dafuer volle Geschwindigkeit
-Config.StunSpeed = 6
+Config.WalkSpeed = 18
+Config.CarrySpeedHall = 15 -- offene Halle: kurz, aber das zappelnde Ei bremst
+Config.CarrySpeedVent = 18 -- Lueftung: laengerer Weg, dafuer volle Geschwindigkeit
+Config.StunSpeed = 7
 Config.StunTime = 1.5 -- so lange ist der abgefangene Dieb langsam und darf das Ei nicht aufheben
 
 -- Interaktion
@@ -38,15 +38,57 @@ Config.MinIncubationAfterSteal = 8 -- Mindestbrutzeit nach dem Sichern (Fenster 
 
 -- Brueten
 Config.StarterIncubation = 10
-Config.Incubation = 30
-Config.CenterPedestals = 4
-Config.CenterRespawn = 8 -- Sekunden, bis ein leerer Sockel ein neues Ei bekommt
+Config.StarterEggType = "Labor"
 
--- Kreaturen. weight = Schlupfchance (relativ), coinsPerSecond = Einkommen.
+-- Zentrale Eierstation: alle paar Sekunden erscheint ein neues Ei auf einem
+-- freien Sockel. Bleibt es liegen, verschwindet es nach einer Weile wieder.
+Config.CenterPedestals = 8
+Config.CenterSpawnInterval = 3
+Config.CenterEggLifetime = 40
+
+-- Muenzen sammeln sich im Einsammelfeld der Basis und werden beim Betreten gutgeschrieben.
+Config.CollectRange = 4
+
+-- Seltenheitsstufen. wow = true loest die grosse Ankuendigung fuer alle aus.
+Config.Rarities = {
+	["Gewöhnlich"] = { order = 1, color = { 205, 205, 205 }, wow = false, title = "GEWÖHNLICH" },
+	["Selten"] = { order = 2, color = { 90, 170, 255 }, wow = false, title = "SELTEN!" },
+	["Episch"] = { order = 3, color = { 190, 110, 255 }, wow = true, title = "EPISCH!" },
+	["Legendär"] = { order = 4, color = { 255, 200, 60 }, wow = true, title = "LEGENDÄR!" },
+}
+
+-- Kreaturen. coinsPerSecond = Einkommen. Welche Kreatur schluepft, bestimmt der Ei-Typ.
 Config.Creatures = {
-	{ id = "Waffelkrabbe", weight = 60, coinsPerSecond = 2 },
-	{ id = "Toaster-Gecko", weight = 30, coinsPerSecond = 5 },
-	{ id = "Pudding-Golem", weight = 10, coinsPerSecond = 12 },
+	{ id = "Waffelkrabbe", rarity = "Gewöhnlich", coinsPerSecond = 2 },
+	{ id = "Toaster-Gecko", rarity = "Selten", coinsPerSecond = 6 },
+	{ id = "Pudding-Golem", rarity = "Episch", coinsPerSecond = 15 },
+	{ id = "Donut-Drache", rarity = "Legendär", coinsPerSecond = 50 },
+}
+
+-- Ei-Typen. weight = Chance, in der Mitte zu erscheinen. incubation = Brutzeit.
+-- creatures = { Kreatur, Gewicht }: Schlupfchancen dieses Typs.
+-- Alle Eier sind nur erspielbar, nie kaeuflich.
+Config.EggTypes = {
+	{
+		id = "Labor", name = "Labor-Ei", rarity = "Gewöhnlich", weight = 70, incubation = 30,
+		shell = { 255, 244, 214 }, accent = { 170, 120, 80 },
+		creatures = { { "Waffelkrabbe", 60 }, { "Toaster-Gecko", 30 }, { "Pudding-Golem", 10 } },
+	},
+	{
+		id = "Kuehl", name = "Kühlfach-Ei", rarity = "Selten", weight = 22, incubation = 40,
+		shell = { 170, 220, 255 }, accent = { 255, 255, 255 },
+		creatures = { { "Waffelkrabbe", 25 }, { "Toaster-Gecko", 50 }, { "Pudding-Golem", 22 }, { "Donut-Drache", 3 } },
+	},
+	{
+		id = "Tresor", name = "Tresor-Ei", rarity = "Episch", weight = 7, incubation = 55,
+		shell = { 70, 76, 90 }, accent = { 240, 190, 60 },
+		creatures = { { "Toaster-Gecko", 30 }, { "Pudding-Golem", 55 }, { "Donut-Drache", 15 } },
+	},
+	{
+		id = "Komet", name = "Kometen-Ei", rarity = "Legendär", weight = 1, incubation = 75,
+		shell = { 110, 60, 190 }, accent = { 255, 230, 120 },
+		creatures = { { "Pudding-Golem", 40 }, { "Donut-Drache", 60 } },
+	},
 }
 
 -- Sounds. id leer lassen = stumm (Platzhalterphase).
@@ -58,18 +100,19 @@ Config.Sounds = {
 	["Waffelkrabbe"] = { id = "", volume = 0.6, min = 6, max = 35 },
 	["Toaster-Gecko"] = { id = "", volume = 0.6, min = 6, max = 35 },
 	["Pudding-Golem"] = { id = "", volume = 0.7, min = 6, max = 40 },
+	["Donut-Drache"] = { id = "", volume = 0.7, min = 8, max = 50 },
 }
 
 -- Map-Masse in Studs. Die Halle ist ein Quadrat um den Ursprung,
 -- die Lueftung laeuft als Ringkorridor aussen herum.
 Config.Map = {
-	HallHalf = 60,
+	HallHalf = 80,
 	WallThickness = 2,
 	HallWallHeight = 16,
 	VentWidth = 8,
 	VentHeight = 8,
 	DoorWidth = 8,
-	BaseDistance = 46,
+	BaseDistance = 64,
 	BaseColors = {
 		{ 255, 176, 59 },
 		{ 86, 180, 233 },
@@ -86,7 +129,7 @@ return Config
 --
 -- Verbindet die Spielregeln aus EggCore mit der Welt: baut die Map, reagiert
 -- auf ProximityPrompts, prueft Reichweiten, faengt Diebe ab, laesst Eier
--- schluepfen und zahlt Muenzen aus. Der Client schickt keine eigenen Befehle.
+-- schluepfen, fuellt die Muenzfelder und kuendigt seltene Funde an. Der Client schickt keine eigenen Befehle.
 -- Jede Aktion laeuft ueber einen Prompt, den der Server selbst auswertet.
 
 local Players = game:GetService("Players")
@@ -110,6 +153,10 @@ remotes.Name = "Remotes"
 local notifyEvent = Instance.new("RemoteEvent")
 notifyEvent.Name = "Notify"
 notifyEvent.Parent = remotes
+-- Effect: reine Anzeige (grosse Ankuendigung, Muenz-Popup, Schlupf-Funkeln).
+local effectEvent = Instance.new("RemoteEvent")
+effectEvent.Name = "Effect"
+effectEvent.Parent = remotes
 remotes.Parent = sharedFolder
 
 local core = EggCore.new(Config)
@@ -152,6 +199,17 @@ local function notify(userId, text, kind)
 	if player then
 		notifyEvent:FireClient(player, text, kind or "info")
 	end
+end
+
+local function effectTo(userId, data)
+	local player = userId and Players:GetPlayerByUserId(userId)
+	if player then
+		effectEvent:FireClient(player, data)
+	end
+end
+
+local function effectAll(data)
+	effectEvent:FireAllClients(data)
 end
 
 local function nameOf(userId)
@@ -283,7 +341,8 @@ local function labelText(egg)
 		end
 		return seconds .. " s"
 	elseif egg.state == "Center" then
-		return "Labor-Ei"
+		local eggType = core.eggTypes[egg.type]
+		return eggType and eggType.rarity or ""
 	elseif egg.state == "Dropped" then
 		return "Am Boden!"
 	end
@@ -291,7 +350,7 @@ local function labelText(egg)
 end
 
 local function createEggPart(eggId)
-	local part = MapBuilder.buildEgg(Config, eggId)
+	local part = MapBuilder.buildEgg(Config, eggId, core.eggs[eggId].type)
 	part:SetAttribute("EggId", eggId)
 	part.Prompt.Triggered:Connect(function(player)
 		onEggPrompt(player, eggId)
@@ -457,6 +516,7 @@ local function spawnCreature(baseId, padIndex, creatureId, ownerId)
 	if voice then
 		voice:Play()
 	end
+	return model
 end
 
 local function clearCreatures(baseId)
@@ -487,17 +547,48 @@ local function hatch(eggId)
 	end
 	local ok, creatureId, padIndex, ownerId, baseId = core:finishHatch(eggId, rng:NextNumber())
 	if ok then
+		local info = core.creatureInfo[creatureId]
+		local rarity = Config.Rarities[info.rarity]
 		if part and part.Parent then
-			local burst = MapBuilder.buildHatchBurst(Config, part.Position)
+			local burst = MapBuilder.buildHatchBurst(Config, part.Position, rarity.color)
 			burst.Parent = map.root
 			burst.Shards:Emit(24)
 			burst.Crack:Play()
 			Debris:AddItem(burst, 3)
 		end
-		spawnCreature(baseId, padIndex, creatureId, ownerId)
-		notify(ownerId, "Geschlüpft: " .. creatureId .. "!", "good")
+		local model = spawnCreature(baseId, padIndex, creatureId, ownerId)
+		local position = model:GetAttribute("Home").Position
+		notify(ownerId, "Geschlüpft: " .. creatureId .. " (" .. info.rarity .. ", +" .. info.coinsPerSecond .. "/s)", "good")
+		if rarity.wow then
+			effectAll({ kind = "wow", title = rarity.title, text = nameOf(ownerId) .. " hat ausgebrütet: " .. creatureId .. "!", color = rarity.color, position = position })
+		else
+			effectTo(ownerId, { kind = "hatch", text = rarity.title, color = rarity.color, position = position })
+		end
 	end
 	flush()
+end
+
+-- Muenzfelder und seltene Eier --------------------------------------------------
+
+local function refreshCoinPad(baseId)
+	local base = map.bases[baseId]
+	local state = core.bases[baseId]
+	if state.owner then
+		base.coinLabel.Text = state.pending .. " Münzen  ·  +" .. core:incomeOf(baseId) .. "/s"
+	else
+		base.coinLabel.Text = "Frei"
+	end
+end
+
+-- Seltene Eier in der Mitte werden fuer alle gross angekuendigt.
+local function announceEgg(eggId)
+	local egg = core.eggs[eggId]
+	local part = eggParts[eggId]
+	local eggType = egg and core.eggTypes[egg.type]
+	local rarity = eggType and Config.Rarities[eggType.rarity]
+	if part and rarity and rarity.wow then
+		effectAll({ kind = "wow", title = rarity.title, text = eggType.name .. " in der Eierstation!", color = rarity.color, position = part.Position })
+	end
 end
 
 -- Spieler --------------------------------------------------------------------
@@ -561,6 +652,7 @@ local function onPlayerAdded(player)
 
 	core:spawnStarterEgg(userId)
 	flush()
+	refreshCoinPad(baseId)
 
 	player.CharacterAdded:Connect(function(character)
 		onCharacterAdded(player, character)
@@ -589,6 +681,7 @@ local function onPlayerRemoving(player)
 	core:removePlayer(userId, os.clock())
 	clearCreatures(baseId)
 	map.bases[baseId].sign.Text = "Frei"
+	refreshCoinPad(baseId)
 	coinValues[userId] = nil
 	flush()
 end
@@ -634,6 +727,22 @@ local function fastStep(now)
 			if humanoid.WalkSpeed ~= speed then
 				humanoid.WalkSpeed = speed
 			end
+
+			-- Auf dem eigenen Muenzfeld: Einnahmen gutschreiben
+			local pad = map.bases[state.base].coinPad
+			local offset = root.Position - pad.Position
+			local flat = Vector3.new(offset.X, 0, offset.Z)
+			if math.abs(offset.Y) < 6 and flat.Magnitude <= Config.CollectRange then
+				local amount = core:collect(player.UserId)
+				if amount > 0 then
+					local value = coinValues[player.UserId]
+					if value then
+						value.Value = state.coins
+					end
+					refreshCoinPad(state.base)
+					effectTo(player.UserId, { kind = "collect", text = "+" .. amount .. " Münzen", position = pad.Position })
+				end
+			end
 		end
 	end
 
@@ -644,7 +753,7 @@ end
 
 -- Einmal pro Sekunde: Eier nachfuellen, bruten, Zeitlimits, Muenzen.
 local function slowStep(dt, now)
-	core:fillCenter(now)
+	local spawned = core:fillCenter(now, rng:NextNumber())
 	for _, eggId in ipairs(core:tick(dt)) do
 		if core:beginHatch(eggId) then
 			task.spawn(hatch, eggId)
@@ -661,6 +770,12 @@ local function slowStep(dt, now)
 		end
 	end
 	flush()
+	for _, eggId in ipairs(spawned) do
+		announceEgg(eggId)
+	end
+	for baseId in ipairs(map.bases) do
+		refreshCoinPad(baseId)
+	end
 	for eggId, egg in pairs(core.eggs) do
 		local part = eggParts[eggId]
 		if part then
@@ -720,21 +835,31 @@ function EggCore.new(config)
 	self.eggs = {} -- [eggId] = egg
 	self.nextEggId = 1
 	self.players = {} -- [userId] = { base, coins, carrying, stunnedUntil }
-	self.bases = {} -- [baseId] = { owner, slots = { [slot] = eggId }, creatures, reserved }
+	self.bases = {} -- [baseId] = { owner, slots = { [slot] = eggId }, creatures, reserved, pending }
 	self.center = {} -- [pedestal] = eggId
-	self.centerEmptySince = {} -- [pedestal] = Zeitpunkt, seit dem der Sockel leer ist
+	self.lastCenterSpawn = nil -- Zeitpunkt des letzten neuen Eis in der Mitte
+	self.eggTypes = {} -- [typeId] = Eintrag aus config.EggTypes
+	self.creatureInfo = {} -- [creatureId] = Eintrag aus config.Creatures
+	for _, eggType in ipairs(config.EggTypes) do
+		self.eggTypes[eggType.id] = eggType
+	end
+	for _, creature in ipairs(config.Creatures) do
+		self.creatureInfo[creature.id] = creature
+	end
 	self.dirty = {} -- [eggId] = true: Darstellung muss aktualisiert werden
 	for baseId = 1, config.MaxBases do
-		self.bases[baseId] = { owner = nil, slots = {}, creatures = {}, reserved = 0 }
+		self.bases[baseId] = { owner = nil, slots = {}, creatures = {}, reserved = 0, pending = 0 }
 	end
 	return self
 end
 
 -- Intern -------------------------------------------------------------------
 
-function EggCore:_newEgg(remaining)
+function EggCore:_newEgg(typeId, remaining)
 	local egg = {
 		id = self.nextEggId,
+		type = typeId,
+		centerDeadline = nil,
 		state = "Center",
 		home = nil,
 		owner = nil, -- Besitzer der Brutstation; waehrend eines Diebstahls das Opfer
@@ -773,7 +898,6 @@ function EggCore:_releaseHome(egg, now)
 	if home.kind == "Center" then
 		if self.center[home.slot] == egg.id then
 			self.center[home.slot] = nil
-			self.centerEmptySince[home.slot] = now or 0
 		end
 	else
 		local base = self.bases[home.base]
@@ -841,7 +965,7 @@ function EggCore:spawnStarterEgg(userId)
 	if base.slots[1] then
 		return nil
 	end
-	local egg = self:_newEgg(self.config.StarterIncubation)
+	local egg = self:_newEgg(self.config.StarterEggType, self.config.StarterIncubation)
 	egg.state = "Incubating"
 	egg.owner = userId
 	egg.protected = true
@@ -879,31 +1003,55 @@ function EggCore:removePlayer(userId, now)
 	base.slots = {}
 	base.creatures = {}
 	base.reserved = 0
+	base.pending = 0
 	self.players[userId] = nil
 	return true
 end
 
 -- Zentrale Eierstation --------------------------------------------------------
 
-function EggCore:spawnCenterEgg(pedestal)
+-- typeId: Eintrag aus config.EggTypes, Standard ist der erste Typ.
+function EggCore:spawnCenterEgg(pedestal, typeId, now)
 	if self.center[pedestal] then
 		return nil
 	end
-	local egg = self:_newEgg(self.config.Incubation)
+	local eggType = self.eggTypes[typeId] or self.config.EggTypes[1]
+	local egg = self:_newEgg(eggType.id, eggType.incubation)
 	egg.home = { kind = "Center", slot = pedestal }
+	egg.centerDeadline = (now or 0) + self.config.CenterEggLifetime
 	self.center[pedestal] = egg.id
 	return egg.id
 end
 
--- Fuellt Sockel auf, die lange genug leer waren.
-function EggCore:fillCenter(now)
+-- roll: Zufallszahl in [0, 1). Seltene Typen haben ein kleines Gewicht.
+function EggCore:pickEggType(roll)
+	local total = 0
+	for _, eggType in ipairs(self.config.EggTypes) do
+		total = total + eggType.weight
+	end
+	local target = roll * total
+	local sum = 0
+	for _, eggType in ipairs(self.config.EggTypes) do
+		sum = sum + eggType.weight
+		if target < sum then
+			return eggType
+		end
+	end
+	return self.config.EggTypes[#self.config.EggTypes]
+end
+
+-- Legt alle CenterSpawnInterval Sekunden ein neues Ei auf einen freien Sockel.
+-- Rueckgabe: Liste der neuen Ei-IDs (leer oder ein Eintrag).
+function EggCore:fillCenter(now, roll)
 	local spawned = {}
+	if self.lastCenterSpawn ~= nil and now - self.lastCenterSpawn < self.config.CenterSpawnInterval then
+		return spawned
+	end
 	for pedestal = 1, self.config.CenterPedestals do
 		if not self.center[pedestal] then
-			local since = self.centerEmptySince[pedestal]
-			if since == nil or now - since >= self.config.CenterRespawn then
-				spawned[#spawned + 1] = self:spawnCenterEgg(pedestal)
-			end
+			self.lastCenterSpawn = now
+			spawned[1] = self:spawnCenterEgg(pedestal, self:pickEggType(roll or 0).id, now)
+			break
 		end
 	end
 	return spawned
@@ -1052,6 +1200,7 @@ function EggCore:returnHome(eggId, now)
 	end
 	if egg.home.kind == "Center" then
 		egg.state = "Center"
+		egg.centerDeadline = (now or 0) + self.config.CenterEggLifetime
 	else
 		egg.state = "Incubating"
 	end
@@ -1067,9 +1216,19 @@ end
 -- Zeitabhaengiges -------------------------------------------------------------
 
 -- Holt Eier zurueck, die zu lange unterwegs sind oder zu lange am Boden liegen.
--- Rueckgabe: Liste { eggId, carrier } der betroffenen Eier.
+-- Eier, die zu lange unberuehrt in der Mitte liegen, verschwinden.
+-- Rueckgabe: Liste { eggId, carrier } der zurueckgeholten Eier.
 function EggCore:expire(now)
 	local expired = {}
+	local stale = {}
+	for _, egg in pairs(self.eggs) do
+		if egg.state == "Center" and egg.centerDeadline ~= nil and now >= egg.centerDeadline then
+			stale[#stale + 1] = egg
+		end
+	end
+	for _, egg in ipairs(stale) do
+		self:_remove(egg, now)
+	end
 	for id, egg in pairs(self.eggs) do
 		local inTransit = egg.state == "Carried" or egg.state == "Dropped"
 		local late = inTransit and egg.transitDeadline ~= nil and now >= egg.transitDeadline
@@ -1121,20 +1280,24 @@ function EggCore:beginHatch(eggId)
 end
 
 -- roll: Zufallszahl in [0, 1). Der Server wuerfelt, nie der Client.
-function EggCore:pickCreature(roll)
+-- Die Chancen haengen vom Ei-Typ ab. Rueckgabe: Eintrag aus config.Creatures.
+function EggCore:pickCreature(roll, typeId)
+	local eggType = self.eggTypes[typeId] or self.config.EggTypes[1]
 	local total = 0
-	for _, creature in ipairs(self.config.Creatures) do
-		total = total + creature.weight
+	for _, entry in ipairs(eggType.creatures) do
+		total = total + entry[2]
 	end
 	local target = roll * total
 	local sum = 0
-	for _, creature in ipairs(self.config.Creatures) do
-		sum = sum + creature.weight
+	local chosen = eggType.creatures[#eggType.creatures][1]
+	for _, entry in ipairs(eggType.creatures) do
+		sum = sum + entry[2]
 		if target < sum then
-			return creature
+			chosen = entry[1]
+			break
 		end
 	end
-	return self.config.Creatures[#self.config.Creatures]
+	return self.creatureInfo[chosen]
 end
 
 -- Schliesst den Schlupf ab: Ei weg, Slot frei, Kreatur gehoert sicher dem Besitzer.
@@ -1147,7 +1310,7 @@ function EggCore:finishHatch(eggId, roll)
 	local baseId = egg.home.base
 	local base = self.bases[baseId]
 	local owner = egg.owner
-	local creature = self:pickCreature(roll)
+	local creature = self:pickCreature(roll, egg.type)
 	base.reserved = math.max(0, base.reserved - 1)
 	base.creatures[#base.creatures + 1] = { id = creature.id, coinsPerSecond = creature.coinsPerSecond }
 	self:_remove(egg)
@@ -1162,34 +1325,62 @@ function EggCore:incomeOf(baseId)
 	return income
 end
 
--- Einmal pro Sekunde aufrufen: jede Kreatur zahlt an den Besitzer ihrer Basis.
+-- Einmal pro Sekunde aufrufen: jede Kreatur zahlt in das Einsammelfeld ihrer Basis.
 function EggCore:payout()
 	for baseId, base in pairs(self.bases) do
-		local player = base.owner and self.players[base.owner]
-		if player then
-			player.coins = player.coins + self:incomeOf(baseId)
+		if base.owner then
+			base.pending = base.pending + self:incomeOf(baseId)
 		end
 	end
 end
 
+-- Der Besitzer betritt sein Einsammelfeld: angesammelte Muenzen gutschreiben.
+-- Rueckgabe: eingesammelter Betrag (0, wenn nichts da ist).
+function EggCore:collect(userId)
+	local player = self.players[userId]
+	if not player then
+		return 0
+	end
+	local base = self.bases[player.base]
+	local amount = base.pending
+	base.pending = 0
+	player.coins = player.coins + amount
+	return amount
+end
+
 return EggCore
 ]]></ProtectedString></Properties></Item>
-<Item class="ModuleScript" referent="RBX7"><Properties><string name="Name">MapBuilder</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – baut die Platzhalter-Map und die Platzhalter-Modelle aus Parts
--- (ModuleScript, nur Server). So ist der erste Test ohne Blender-Import spielbar.
--- Spaeter ersetzen importierte Modelle die Funktionen buildEgg und buildCreature.
+<Item class="ModuleScript" referent="RBX7"><Properties><string name="Name">MapBuilder</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – baut Map, Eier und Kreaturen aus Roblox-Grundformen
+-- (ModuleScript, nur Server). So ist das Spiel ohne Blender-Import spielbar.
+-- Spaeter koennen importierte Modelle buildEgg und buildCreature ersetzen.
 --
 -- Aufbau von oben gesehen (Masse aus Config.Map):
 --   Halle:    Quadrat um den Ursprung, in der Mitte die Eierstation
 --   Basen:    vier Stueck, je eine vor der Mitte jeder Hallenwand
 --   Lueftung: Ringkorridor hinter den Hallenwaenden, Zugang durch eine Tuer
 --             hinter jeder Basis
+--   Aussen:   Wiese mit Baeumen, nur zum Anschauen
+--
+-- Neon wird sparsam eingesetzt (Lueftungslampen, Alarmlampe, Sterne auf dem
+-- Kometen-Ei), damit das Bild nicht ueberstrahlt.
 
 local MapBuilder = {}
 
 MapBuilder.EGG_HALF_HEIGHT = 1.4
 
+local EGG_RADII = Vector3.new(1.1, 1.4, 1.1)
+
 local function rgb(c)
 	return Color3.fromRGB(c[1], c[2], c[3])
+end
+
+-- Mischt eine Farbe {r, g, b} mit Weiss. amount 0 = unveraendert, 1 = weiss.
+local function tint(c, amount)
+	return Color3.fromRGB(
+		math.floor(c[1] + (255 - c[1]) * amount),
+		math.floor(c[2] + (255 - c[2]) * amount),
+		math.floor(c[3] + (255 - c[3]) * amount)
+	)
 end
 
 local function make(className, props, parent)
@@ -1212,6 +1403,44 @@ local function block(parent, name, size, cframe, color, material)
 		TopSurface = Enum.SurfaceType.Smooth,
 		BottomSurface = Enum.SurfaceType.Smooth,
 	}, parent)
+end
+
+local UPRIGHT = CFrame.Angles(0, 0, math.rad(90))
+local ALONG_Z = CFrame.Angles(0, math.rad(90), 0)
+
+-- Stehender Zylinder. cframe ist die Mitte.
+local function cylinder(parent, name, diameter, height, cframe, color, material)
+	local part = block(parent, name, Vector3.new(height, diameter, diameter), cframe * UPRIGHT, color, material)
+	part.Shape = Enum.PartType.Cylinder
+	return part
+end
+
+-- Liegender Zylinder entlang der lokalen X-Achse.
+local function pipe(parent, name, diameter, length, cframe, color, material)
+	local part = block(parent, name, Vector3.new(length, diameter, diameter), cframe, color, material)
+	part.Shape = Enum.PartType.Cylinder
+	return part
+end
+
+local function ball(parent, name, diameter, cframe, color, material)
+	local part = block(parent, name, Vector3.new(diameter, diameter, diameter), cframe, color, material)
+	part.Shape = Enum.PartType.Ball
+	return part
+end
+
+-- Ellipsoid in beliebigen Massen: Quader mit Kugel-Mesh.
+local function blob(parent, name, size, cframe, color, material)
+	local part = block(parent, name, size, cframe, color, material)
+	make("SpecialMesh", { MeshType = Enum.MeshType.Sphere }, part)
+	return part
+end
+
+-- Deko steht niemandem im Weg und wird von Strahlen ignoriert.
+local function ghost(part)
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	return part
 end
 
 local function prompt(parent, actionText, objectText, config)
@@ -1237,57 +1466,69 @@ local function sound(parent, name, spec)
 	}, parent)
 end
 
-local COLOR_FLOOR = Color3.fromRGB(214, 220, 228)
-local COLOR_TILE = Color3.fromRGB(176, 184, 196)
-local COLOR_WALL = Color3.fromRGB(236, 240, 245)
-local COLOR_TRIM = Color3.fromRGB(60, 190, 200)
-local COLOR_VENT = Color3.fromRGB(110, 118, 128)
-local COLOR_METAL = Color3.fromRGB(70, 76, 86)
-local COLOR_CREAM = Color3.fromRGB(250, 240, 200)
+-- Zwei Textzeilen ueber einem Part.
+local function infoBoard(parent, name, width, offsetY, maxDistance, titleColor)
+	local gui = make("BillboardGui", {
+		Name = name,
+		Size = UDim2.new(0, width, 0, 44),
+		StudsOffset = Vector3.new(0, offsetY, 0),
+		MaxDistance = maxDistance,
+		LightInfluence = 0,
+	}, parent)
+	local title = make("TextLabel", {
+		Name = "Title",
+		Size = UDim2.new(1, 0, 0.5, 0),
+		BackgroundTransparency = 1,
+		TextScaled = true,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = titleColor,
+		TextStrokeTransparency = 0.35,
+		Text = "",
+	}, gui)
+	local line = make("TextLabel", {
+		Name = "Label",
+		Position = UDim2.new(0, 0, 0.5, 0),
+		Size = UDim2.new(1, 0, 0.5, 0),
+		BackgroundTransparency = 1,
+		TextScaled = true,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextStrokeTransparency = 0.35,
+		Text = "",
+	}, gui)
+	return gui, title, line
+end
+
+-- Pseudozufall in [0, 1) aus zwei Zahlen. Gleiche Eingabe, gleiches Ergebnis.
+local function hash(a, b)
+	local x = math.sin(a * 12.9898 + b * 78.233) * 43758.5453
+	return x - math.floor(x)
+end
+
+local COLOR_FLOOR = Color3.fromRGB(222, 226, 232)
+local COLOR_TILE = Color3.fromRGB(200, 206, 216)
+local COLOR_WALL = Color3.fromRGB(240, 242, 246)
+local COLOR_TRIM = Color3.fromRGB(78, 168, 178)
+local COLOR_VENT = Color3.fromRGB(104, 112, 122)
+local COLOR_METAL = Color3.fromRGB(80, 86, 98)
+local COLOR_CREAM = Color3.fromRGB(250, 242, 214)
+local COLOR_GOLD = Color3.fromRGB(236, 186, 64)
+local COLOR_GLASS = Color3.fromRGB(205, 232, 250)
 local COLOR_LAMP_OFF = Color3.fromRGB(90, 20, 20)
 local TANK_COLORS = {
-	Color3.fromRGB(120, 255, 140),
-	Color3.fromRGB(255, 120, 200),
-	Color3.fromRGB(120, 220, 255),
-	Color3.fromRGB(255, 220, 90),
+	{ 110, 220, 130 },
+	{ 240, 130, 190 },
+	{ 110, 200, 240 },
+	{ 240, 205, 90 },
 }
 
-local UPRIGHT = CFrame.Angles(0, 0, math.rad(90))
-local ALONG_Z = CFrame.Angles(0, math.rad(90), 0)
-
--- Stehender Zylinder. cframe ist die Mitte.
-local function cylinder(parent, name, diameter, height, cframe, color, material)
-	local part = block(parent, name, Vector3.new(height, diameter, diameter), cframe * UPRIGHT, color, material)
-	part.Shape = Enum.PartType.Cylinder
-	return part
-end
-
--- Liegender Zylinder entlang der lokalen X-Achse.
-local function pipe(parent, name, diameter, length, cframe, color, material)
-	local part = block(parent, name, Vector3.new(length, diameter, diameter), cframe, color, material)
-	part.Shape = Enum.PartType.Cylinder
-	return part
-end
-
-local function ball(parent, name, diameter, cframe, color, material)
-	local part = block(parent, name, Vector3.new(diameter, diameter, diameter), cframe, color, material)
-	part.Shape = Enum.PartType.Ball
-	return part
-end
-
--- Deko steht niemandem im Weg.
-local function ghost(part)
-	part.CanCollide = false
-	return part
-end
-
--- Helles, leicht dunstiges Laborlicht mit sanftem Leuchten um Neonteile.
+-- Ruhiges Tageslicht mit leichtem Dunst. Bloom nur fuer sehr helle Stellen.
 local function setupLighting()
 	local Lighting = game:GetService("Lighting")
-	Lighting.ClockTime = 14.5
-	Lighting.Brightness = 2.2
-	Lighting.Ambient = Color3.fromRGB(110, 115, 130)
-	Lighting.OutdoorAmbient = Color3.fromRGB(140, 145, 160)
+	Lighting.ClockTime = 14
+	Lighting.Brightness = 2
+	Lighting.Ambient = Color3.fromRGB(105, 108, 120)
+	Lighting.OutdoorAmbient = Color3.fromRGB(132, 136, 150)
 	local function ensure(className, props)
 		local effect = Lighting:FindFirstChildOfClass(className) or Instance.new(className)
 		for key, value in pairs(props) do
@@ -1295,20 +1536,22 @@ local function setupLighting()
 		end
 		effect.Parent = Lighting
 	end
-	ensure("Atmosphere", { Density = 0.28, Offset = 0.2, Haze = 1.2, Color = Color3.fromRGB(200, 215, 235) })
-	ensure("BloomEffect", { Intensity = 0.6, Size = 20, Threshold = 1.4 })
-	ensure("ColorCorrectionEffect", { Saturation = 0.18, Contrast = 0.06 })
+	ensure("Atmosphere", { Density = 0.2, Offset = 0.1, Haze = 0.4, Glare = 0, Color = Color3.fromRGB(200, 212, 228) })
+	ensure("BloomEffect", { Intensity = 0.12, Size = 16, Threshold = 2.4 })
+	ensure("ColorCorrectionEffect", { Saturation = 0.1, Contrast = 0.04, Brightness = 0 })
 end
 
+-- Halle, Fenster, Saeulen, Tank und Lueftung an einer der vier Seiten.
 local function buildSide(geometry, decor, side, sideIndex, M)
-	local wallZ = M.HallHalf + M.WallThickness / 2
-	local innerHalf = M.HallHalf + M.WallThickness
+	local H = M.HallHalf
+	local wallZ = H + M.WallThickness / 2
+	local innerHalf = H + M.WallThickness
 	local outerHalf = innerHalf + M.VentWidth + M.WallThickness
 	local doorHalf = M.DoorWidth / 2
 	local segment = innerHalf - doorHalf
-	local faceZ = M.HallHalf - 0.2
+	local faceZ = H - 0.2
 
-	-- Hallenwand mit Tuer zur Lueftung
+	-- Hallenwand mit Tuer zur Lueftung, Sockelleiste und Fensterband
 	for _, sign in ipairs({ -1, 1 }) do
 		local x = sign * (doorHalf + segment / 2)
 		block(
@@ -1318,8 +1561,9 @@ local function buildSide(geometry, decor, side, sideIndex, M)
 			side * CFrame.new(x, M.HallWallHeight / 2, wallZ),
 			COLOR_WALL
 		)
-		ghost(block(decor, "WallBand", Vector3.new(segment - 2, 2, 0.3), side * CFrame.new(x - sign, 1, faceZ), COLOR_TRIM))
-		-- Tuerrahmen
+		ghost(block(decor, "Baseboard", Vector3.new(segment - 2, 1.4, 0.3), side * CFrame.new(x - sign, 0.7, faceZ), COLOR_TRIM))
+		local window = ghost(block(decor, "Window", Vector3.new(segment - 8, 3, 0.2), side * CFrame.new(x - sign * 2, 11.5, faceZ), COLOR_GLASS, Enum.Material.Glass))
+		window.Transparency = 0.2
 		ghost(cylinder(decor, "DoorPost", 1.2, M.VentHeight, side * CFrame.new(sign * (doorHalf + 0.3), M.VentHeight / 2, faceZ), COLOR_METAL, Enum.Material.Metal))
 	end
 	local lintelHeight = M.HallWallHeight - M.VentHeight
@@ -1330,33 +1574,47 @@ local function buildSide(geometry, decor, side, sideIndex, M)
 		side * CFrame.new(0, M.VentHeight + lintelHeight / 2, wallZ),
 		COLOR_WALL
 	)
-	ghost(pipe(decor, "DoorGlow", 0.5, M.DoorWidth + 1.8, side * CFrame.new(0, M.VentHeight + 0.3, faceZ), COLOR_TRIM, Enum.Material.Neon))
+	ghost(pipe(decor, "DoorArch", 0.6, M.DoorWidth + 1.8, side * CFrame.new(0, M.VentHeight + 0.3, faceZ), COLOR_METAL, Enum.Material.Metal))
 
-	-- Runde Wandsaeulen und Leuchtband unter der Mauerkrone
-	for _, x in ipairs({ -50, -30, -12, 12, 30, 50 }) do
+	-- Runde Wandsaeulen mit farbigem Fuss und Kopf
+	for _, fraction in ipairs({ -0.83, -0.5, -0.2, 0.2, 0.5, 0.83 }) do
+		local x = fraction * H
 		ghost(cylinder(decor, "Pillar", 2.4, M.HallWallHeight, side * CFrame.new(x, M.HallWallHeight / 2, faceZ), COLOR_WALL))
-		ghost(ball(decor, "PillarCap", 2.8, side * CFrame.new(x, M.HallWallHeight, faceZ), COLOR_TRIM))
+		ghost(cylinder(decor, "PillarFoot", 3, 1, side * CFrame.new(x, 0.5, faceZ), COLOR_TRIM))
+		ghost(cylinder(decor, "PillarCap", 3, 0.8, side * CFrame.new(x, M.HallWallHeight - 0.4, faceZ), COLOR_TRIM))
 	end
-	ghost(pipe(decor, "WallGlow", 0.4, M.HallHalf * 2, side * CFrame.new(0, M.HallWallHeight - 1, faceZ), COLOR_TRIM, Enum.Material.Neon))
+	ghost(pipe(decor, "WallTrim", 0.6, H * 2, side * CFrame.new(0, M.HallWallHeight - 0.3, faceZ), COLOR_TRIM))
 
-	-- Brodelnder Tank in der Hallenecke mit Rohr an der Wand
-	local corner = side * CFrame.new(M.HallHalf - 8, 0, M.HallHalf - 8)
-	local liquid = TANK_COLORS[(sideIndex - 1) % #TANK_COLORS + 1]
+	-- Brodelnder Tank in der Hallenecke, Rohr an der Wand entlang in den Boden
+	local corner = side * CFrame.new(H - 8, 0, H - 8)
+	local liquid = rgb(TANK_COLORS[(sideIndex - 1) % #TANK_COLORS + 1])
 	cylinder(decor, "TankBase", 9, 1, corner * CFrame.new(0, 0.5, 0), COLOR_METAL, Enum.Material.Metal)
-	local glass = cylinder(decor, "TankGlass", 8, 10, corner * CFrame.new(0, 6, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass)
-	glass.Transparency = 0.6
-	local fill = ghost(cylinder(decor, "TankLiquid", 7, 7, corner * CFrame.new(0, 4.5, 0), liquid, Enum.Material.Neon))
-	fill.Transparency = 0.25
-	make("PointLight", { Color = liquid, Range = 22, Brightness = 1.2, Shadows = false }, fill)
-	for index, offset in ipairs({ { -1.5, 2.5, 1 }, { 1.2, 4.5, -1.4 }, { 0.4, 6.5, 1.6 } }) do
-		ghost(ball(decor, "Bubble" .. index, 1.1, corner * CFrame.new(offset[1], offset[2], offset[3]), Color3.fromRGB(255, 255, 255), Enum.Material.Neon))
+	local glass = cylinder(decor, "TankGlass", 8, 10, corner * CFrame.new(0, 6, 0), COLOR_GLASS, Enum.Material.Glass)
+	glass.Transparency = 0.55
+	local fill = ghost(cylinder(decor, "TankLiquid", 7.2, 7, corner * CFrame.new(0, 4.5, 0), liquid, Enum.Material.Glass))
+	fill.Transparency = 0.3
+	make("PointLight", { Color = liquid, Range = 14, Brightness = 0.5, Shadows = false }, fill)
+	for index, offset in ipairs({ { -1.5, 2.5, 1 }, { 1.2, 4.5, -1.4 }, { 0.4, 6.5, 1.6 }, { -0.8, 7.4, -0.6 } }) do
+		local bubble = ghost(ball(decor, "Bubble" .. index, 0.6 + index * 0.15, corner * CFrame.new(offset[1], offset[2], offset[3]), Color3.fromRGB(255, 255, 255)))
+		bubble.Transparency = 0.35
 	end
 	ghost(cylinder(decor, "TankCap", 9, 1, corner * CFrame.new(0, 11.5, 0), COLOR_METAL, Enum.Material.Metal))
-	ghost(cylinder(decor, "TankRiser", 1.2, 2, corner * CFrame.new(0, 13, 0), COLOR_METAL, Enum.Material.Metal))
-	ghost(pipe(decor, "TankElbow", 1.2, 7, corner * CFrame.new(0, 13.6, 3.5) * ALONG_Z, COLOR_METAL, Enum.Material.Metal))
-	ghost(pipe(decor, "TankPipe", 1.2, 40, side * CFrame.new(M.HallHalf - 28, 13.6, M.HallHalf - 1), COLOR_METAL, Enum.Material.Metal))
+	ghost(cylinder(decor, "TankRiser", 1.2, 2.6, corner * CFrame.new(0, 13.3, 0), COLOR_METAL, Enum.Material.Metal))
+	ghost(pipe(decor, "TankElbow", 1.2, 6, corner * CFrame.new(0, 14, 3) * ALONG_Z, COLOR_METAL, Enum.Material.Metal))
+	ghost(pipe(decor, "TankPipe", 1.2, 40, side * CFrame.new(H - 28, 14, H - 2), COLOR_METAL, Enum.Material.Metal))
+	ghost(cylinder(decor, "TankDrain", 1.2, 14, side * CFrame.new(H - 48, 7, H - 2), COLOR_METAL, Enum.Material.Metal))
 
-	-- Lueftung: Aussenwand, Decke, Lichter
+	-- Pflanzen an der Wand
+	for _, x in ipairs({ -0.66 * H, 0.66 * H }) do
+		local spot = side * CFrame.new(x, 0, H - 4)
+		cylinder(decor, "Pot", 2.2, 2, spot * CFrame.new(0, 1, 0), Color3.fromRGB(196, 112, 72))
+		ghost(cylinder(decor, "Soil", 1.9, 0.2, spot * CFrame.new(0, 2.0, 0), Color3.fromRGB(92, 62, 42)))
+		ghost(ball(decor, "Leaves", 2.6, spot * CFrame.new(0, 3.3, 0), Color3.fromRGB(88, 168, 92)))
+		ghost(ball(decor, "Leaves", 1.8, spot * CFrame.new(0.7, 4.4, 0.3), Color3.fromRGB(110, 188, 104)))
+		ghost(ball(decor, "Leaves", 1.6, spot * CFrame.new(-0.6, 4.2, -0.4), Color3.fromRGB(78, 152, 86)))
+	end
+
+	-- Lueftung: Aussenwand, Decke, Riffelblechboden, Lampen
 	block(
 		geometry,
 		"VentOuterWall",
@@ -1374,6 +1632,7 @@ local function buildSide(geometry, decor, side, sideIndex, M)
 		COLOR_VENT,
 		Enum.Material.Metal
 	)
+	block(decor, "VentFloor", Vector3.new(outerHalf * 2, 0.1, M.VentWidth), side * CFrame.new(0, 0.05, ventZ), COLOR_VENT, Enum.Material.DiamondPlate)
 	for _, x in ipairs({ -ventZ, -ventZ / 2, 0, ventZ / 2 }) do
 		local lamp = ghost(pipe(
 			geometry,
@@ -1384,25 +1643,29 @@ local function buildSide(geometry, decor, side, sideIndex, M)
 			Color3.fromRGB(150, 230, 255),
 			Enum.Material.Neon
 		))
-		make("PointLight", { Range = 18, Brightness = 0.9, Shadows = false }, lamp)
+		make("PointLight", { Range = 16, Brightness = 0.7, Shadows = false }, lamp)
 	end
 end
 
 local function buildBase(root, baseId, side, config)
 	local M = config.Map
 	local origin = side * CFrame.new(0, 0, M.BaseDistance)
-	local color = rgb(M.BaseColors[baseId])
+	local baseColor = M.BaseColors[baseId]
+	local color = rgb(baseColor)
 	local model = make("Model", { Name = "Base" .. baseId }, root)
 	model:SetAttribute("Owner", 0)
 	model:SetAttribute("Alarm", false)
 
 	block(model, "Plate", Vector3.new(30, 0.2, 26), origin * CFrame.new(0, 0.1, 0), color)
-	-- Runde Eckpfosten mit Kugelkopf
+	block(model, "Carpet", Vector3.new(27, 0.06, 23), origin * CFrame.new(0, 0.22, 0), tint(baseColor, 0.45))
+
+	-- Eckpfosten mit Kugelkopf, Gelaender an den Seiten
 	for _, x in ipairs({ -15, 15 }) do
 		for _, z in ipairs({ -13, 13 }) do
-			ghost(cylinder(model, "Post", 1.4, 3, origin * CFrame.new(x, 1.5, z), COLOR_WALL))
-			ghost(ball(model, "PostCap", 2, origin * CFrame.new(x, 3.4, z), color, Enum.Material.Neon))
+			ghost(cylinder(model, "Post", 1.2, 3, origin * CFrame.new(x, 1.5, z), COLOR_WALL))
+			ghost(ball(model, "PostCap", 1.6, origin * CFrame.new(x, 3.2, z), color))
 		end
+		ghost(pipe(model, "Rail", 0.35, 26, origin * CFrame.new(x, 2.4, 0) * ALONG_Z, COLOR_WALL))
 	end
 
 	-- Brutstationen: drei Slots in einer Reihe vor der Lueftungstuer.
@@ -1418,20 +1681,34 @@ local function buildBase(root, baseId, side, config)
 		slotPrompts[slot] = prompt(part, "Ei einsetzen", "Brutstation", config)
 
 		ghost(cylinder(model, "IncubatorBase", 4.6, 1, center, COLOR_METAL, Enum.Material.Metal))
-		ghost(cylinder(model, "IncubatorRing", 5.2, 0.2, center * CFrame.new(0, -0.3, 0), color, Enum.Material.Neon))
-		local dome = ghost(ball(model, "IncubatorDome", 4.6, center * CFrame.new(0, 2.1, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass))
-		dome.Transparency = 0.75
+		ghost(cylinder(model, "IncubatorRing", 5, 0.25, center * CFrame.new(0, 0.45, 0), color))
+		local dome = ghost(ball(model, "IncubatorDome", 4.6, center * CFrame.new(0, 2.1, 0), COLOR_GLASS, Enum.Material.Glass))
+		dome.Transparency = 0.72
+		ghost(block(model, "IncubatorPanel", Vector3.new(1.4, 0.7, 0.3), center * CFrame.new(0, 0, -2.35), COLOR_CREAM))
+		ghost(ball(model, "IncubatorLight", 0.3, center * CFrame.new(0.4, 0.05, -2.5), Color3.fromRGB(110, 210, 130)))
 	end
 
 	-- Stellplaetze fuer geschluepfte Kreaturen, Blick zur Hallenmitte
 	local pads = {}
 	for row = 0, 1 do
 		for column = 0, 3 do
-			local pad = origin * CFrame.new(-10.5 + column * 7, 0.2, -3 - row * 6)
+			local pad = origin * CFrame.new(-10.5 + column * 7, 0.36, -3 - row * 6)
 			pads[#pads + 1] = pad
-			ghost(cylinder(model, "PadMark", 4.5, 0.1, pad * CFrame.new(0, 0.05, 0), COLOR_WALL))
+			ghost(cylinder(model, "PadRim", 5, 0.12, pad * CFrame.new(0, -0.08, 0), color))
+			ghost(cylinder(model, "PadMark", 4.4, 0.14, pad * CFrame.new(0, -0.07, 0), COLOR_WALL))
 		end
 	end
+
+	-- Muenzfeld: hier sammeln sich die Einnahmen der Kreaturen
+	local coinCenter = origin * CFrame.new(11.5, 0.2, 2.5)
+	local coinPad = cylinder(model, "CoinPad", 4.6, 0.3, coinCenter * CFrame.new(0, 0.15, 0), COLOR_GOLD, Enum.Material.Metal)
+	ghost(cylinder(model, "CoinPadInner", 3.4, 0.32, coinCenter * CFrame.new(0, 0.16, 0), Color3.fromRGB(255, 222, 120)))
+	for index = 0, 3 do
+		ghost(cylinder(model, "CoinStack", 0.9, 0.2, coinCenter * CFrame.new(1.5 + index * 0.03, 0.45 + index * 0.22, -1.1), COLOR_GOLD, Enum.Material.Metal))
+	end
+	local _, coinTitle, coinLabel = infoBoard(coinPad, "CoinInfo", 190, 3.2, 70, Color3.fromRGB(255, 220, 110))
+	coinTitle.Text = "Münzfeld"
+	coinLabel.Text = "Frei"
 
 	-- Eigener Spawnpunkt, Blick zur Hallenmitte
 	local spawnPad = make("SpawnLocation", {
@@ -1446,13 +1723,13 @@ local function buildBase(root, baseId, side, config)
 		Duration = 0,
 		TopSurface = Enum.SurfaceType.Smooth,
 	}, model)
-	ghost(cylinder(model, "SpawnMark", 6, 0.1, origin * CFrame.new(0, 0.62, 1), COLOR_CREAM, Enum.Material.Neon))
+	ghost(cylinder(model, "SpawnMark", 6, 0.1, origin * CFrame.new(0, 0.62, 1), COLOR_CREAM))
 
 	-- Alarmlampe auf einem Mast, Schild ueber der Lueftungstuer
 	cylinder(model, "LampPole", 0.7, 9, origin * CFrame.new(-13, 4.5, 11), COLOR_METAL, Enum.Material.Metal)
 	local lamp = ball(model, "AlarmLamp", 2, origin * CFrame.new(-13, 10, 11), COLOR_LAMP_OFF)
 	lamp.CanCollide = false
-	local light = make("PointLight", { Color = Color3.fromRGB(255, 40, 40), Range = 40, Brightness = 3, Enabled = false }, lamp)
+	local light = make("PointLight", { Color = Color3.fromRGB(255, 40, 40), Range = 40, Brightness = 2, Enabled = false }, lamp)
 	local alarmSound = sound(lamp, "Alarm", config.Sounds.Alarm)
 	alarmSound.Looped = true
 
@@ -1473,6 +1750,8 @@ local function buildBase(root, baseId, side, config)
 		slots = slots,
 		slotPrompts = slotPrompts,
 		pads = pads,
+		coinPad = coinPad,
+		coinLabel = coinLabel,
 		spawn = spawnPad,
 		spawnCFrame = origin * CFrame.new(0, 4, 1),
 		lamp = lamp,
@@ -1483,9 +1762,32 @@ local function buildBase(root, baseId, side, config)
 	}
 end
 
+-- Labortisch mit Becherglaesern. Die Platte ist begehbar.
+local function buildBench(decor, cframe, liquid)
+	block(decor, "BenchTop", Vector3.new(7, 0.4, 3), cframe * CFrame.new(0, 3, 0), COLOR_WALL)
+	for _, x in ipairs({ -3.1, 3.1 }) do
+		for _, z in ipairs({ -1.1, 1.1 }) do
+			ghost(cylinder(decor, "BenchLeg", 0.35, 2.8, cframe * CFrame.new(x, 1.4, z), COLOR_METAL, Enum.Material.Metal))
+		end
+	end
+	for index = 0, 2 do
+		local x = -2 + index * 2
+		local glass = ghost(cylinder(decor, "Beaker", 0.9, 1.3, cframe * CFrame.new(x, 3.85, 0), COLOR_GLASS, Enum.Material.Glass))
+		glass.Transparency = 0.5
+		ghost(cylinder(decor, "BeakerLiquid", 0.8, 0.6 + index * 0.2, cframe * CFrame.new(x, 3.5 + index * 0.1, 0), rgb(liquid)))
+	end
+end
+
+local function buildTree(decor, cframe, scale)
+	ghost(cylinder(decor, "Trunk", 1.6 * scale, 8 * scale, cframe * CFrame.new(0, 4 * scale, 0), Color3.fromRGB(120, 86, 56), Enum.Material.Wood))
+	ghost(ball(decor, "Crown", 7 * scale, cframe * CFrame.new(0, 9.5 * scale, 0), Color3.fromRGB(86, 158, 82)))
+	ghost(ball(decor, "Crown", 5 * scale, cframe * CFrame.new(1.8 * scale, 12 * scale, 0.8 * scale), Color3.fromRGB(102, 178, 96)))
+end
+
 -- Baut die komplette Map unter Workspace/EiAlarm und gibt Verweise zurueck.
 function MapBuilder.build(config)
 	local M = config.Map
+	local H = M.HallHalf
 
 	-- Standardteile der Baseplate-Vorlage stoeren die Map. Sie werden nur in der
 	-- laufenden Sitzung entfernt, die gespeicherte Place-Datei bleibt unveraendert.
@@ -1508,15 +1810,22 @@ function MapBuilder.build(config)
 	local eggFolder = make("Folder", { Name = "Eggs" }, root)
 	local creatureFolder = make("Folder", { Name = "Creatures" }, root)
 
-	local outerHalf = M.HallHalf + M.WallThickness * 2 + M.VentWidth
+	local outerHalf = H + M.WallThickness * 2 + M.VentWidth
 	block(geometry, "Floor", Vector3.new(outerHalf * 2, 1, outerHalf * 2), CFrame.new(0, -0.5, 0), COLOR_FLOOR)
-	-- Fliesenfugen, Leuchtring um die Mitte
-	for offset = -48, 48, 12 do
-		ghost(block(decor, "TileLine", Vector3.new(M.HallHalf * 2, 0.04, 0.3), CFrame.new(0, 0.02, offset), COLOR_TILE))
-		ghost(block(decor, "TileLine", Vector3.new(0.3, 0.04, M.HallHalf * 2), CFrame.new(offset, 0.02, 0), COLOR_TILE))
+	block(decor, "Ground", Vector3.new(560, 1, 560), CFrame.new(0, -0.6, 0), Color3.fromRGB(104, 160, 88), Enum.Material.Grass)
+	for index = 0, 15 do
+		local angle = index / 16 * math.pi * 2 + hash(index, 1) * 0.3
+		local radius = outerHalf + 26 + hash(index, 2) * 40
+		buildTree(decor, CFrame.new(math.cos(angle) * radius, 0, math.sin(angle) * radius), 1 + hash(index, 3) * 0.6)
 	end
-	ghost(cylinder(decor, "CenterGlow", 44, 0.1, CFrame.new(0, 0.05, 0), COLOR_TRIM, Enum.Material.Neon))
-	ghost(cylinder(decor, "CenterDisc", 42, 0.12, CFrame.new(0, 0.07, 0), COLOR_CREAM))
+
+	-- Fliesenfugen, heller Kreis um die Mitte
+	for offset = -(H - 16), H - 16, 16 do
+		ghost(block(decor, "TileLine", Vector3.new(H * 2, 0.04, 0.3), CFrame.new(0, 0.02, offset), COLOR_TILE))
+		ghost(block(decor, "TileLine", Vector3.new(0.3, 0.04, H * 2), CFrame.new(offset, 0.02, 0), COLOR_TILE))
+	end
+	ghost(cylinder(decor, "CenterRim", 45, 0.1, CFrame.new(0, 0.05, 0), COLOR_TRIM))
+	ghost(cylinder(decor, "CenterDisc", 44, 0.12, CFrame.new(0, 0.06, 0), COLOR_CREAM))
 
 	local bases = {}
 	for baseId = 1, config.MaxBases do
@@ -1524,31 +1833,35 @@ function MapBuilder.build(config)
 		buildSide(geometry, decor, side, baseId, M)
 		bases[baseId] = buildBase(root, baseId, side, config)
 		-- Farbiger Weg von der Mitte zur Basis
-		local from, to = 21, M.BaseDistance - 13
-		ghost(block(decor, "Path", Vector3.new(6, 0.1, to - from), side * CFrame.new(0, 0.06, (from + to) / 2), rgb(M.BaseColors[baseId])))
+		local from, to = 22.5, M.BaseDistance - 13
+		ghost(block(decor, "Path", Vector3.new(6, 0.1, to - from), side * CFrame.new(0, 0.06, (from + to) / 2), tint(M.BaseColors[baseId], 0.25)))
+		-- Labortisch im Viertel zwischen zwei Basen
+		local bench = side * CFrame.new(H * 0.47, 0, H * 0.47) * CFrame.Angles(0, math.rad(45), 0)
+		buildBench(decor, bench, TANK_COLORS[(baseId % #TANK_COLORS) + 1])
 	end
 
-	-- Zentrale Eierstation: runde Plattform, runde Sockel, Leuchtsaeule.
+	-- Zentrale Eierstation: runde Plattform, Sockel im Kreis, Glassaeule.
 	-- Die Sockel selbst sind unsichtbare Quader, die Eier richten sich daran aus.
 	local station = make("Model", { Name = "EggStation" }, root)
-	cylinder(station, "Platform", 18, 0.4, CFrame.new(0, 0.2, 0), Color3.fromRGB(255, 250, 235))
+	cylinder(station, "Platform", 19, 0.4, CFrame.new(0, 0.2, 0), Color3.fromRGB(252, 248, 236))
+	ghost(cylinder(station, "PlatformRim", 19.6, 0.3, CFrame.new(0, 0.15, 0), COLOR_TRIM))
 	local pedestals = {}
-	local corners = { { -4, -4 }, { 4, -4 }, { 4, 4 }, { -4, 4 } }
 	for index = 1, config.CenterPedestals do
-		local corner = corners[(index - 1) % #corners + 1]
-		local center = CFrame.new(corner[1], 1.4, corner[2])
-		local pedestal = block(station, "Pedestal" .. index, Vector3.new(3, 2, 3), center, COLOR_METAL, Enum.Material.Metal)
+		local angle = (index - 1) / config.CenterPedestals * math.pi * 2
+		local center = CFrame.new(math.cos(angle) * 6.5, 1.4, math.sin(angle) * 6.5)
+		local pedestal = block(station, "Pedestal" .. index, Vector3.new(2.6, 2, 2.6), center, COLOR_METAL, Enum.Material.Metal)
 		pedestal.Transparency = 1
 		pedestals[index] = pedestal
-		ghost(cylinder(station, "PedestalBody", 3, 2, center, COLOR_METAL, Enum.Material.Metal))
-		ghost(cylinder(station, "PedestalRing", 3.8, 0.2, center * CFrame.new(0, -0.9, 0), COLOR_TRIM, Enum.Material.Neon))
+		ghost(cylinder(station, "PedestalBody", 2.6, 2, center, COLOR_METAL, Enum.Material.Metal))
+		ghost(cylinder(station, "PedestalCushion", 2.2, 0.2, center * CFrame.new(0, 1.05, 0), COLOR_TRIM))
+		ghost(cylinder(station, "PedestalFoot", 3.2, 0.3, center * CFrame.new(0, -0.85, 0), COLOR_WALL))
 	end
-	cylinder(station, "ColumnBase", 3, 1.5, CFrame.new(0, 1.15, 0), COLOR_METAL, Enum.Material.Metal)
-	local tube = ghost(cylinder(station, "ColumnGlass", 2.4, 8, CFrame.new(0, 5.9, 0), Color3.fromRGB(210, 240, 255), Enum.Material.Glass))
+	cylinder(station, "ColumnBase", 3.4, 1.6, CFrame.new(0, 1.2, 0), COLOR_METAL, Enum.Material.Metal)
+	local tube = ghost(cylinder(station, "ColumnGlass", 2.6, 8, CFrame.new(0, 6, 0), COLOR_GLASS, Enum.Material.Glass))
 	tube.Transparency = 0.5
-	local core = ghost(ball(station, "ColumnCore", 1.8, CFrame.new(0, 6, 0), Color3.fromRGB(255, 230, 120), Enum.Material.Neon))
-	make("PointLight", { Color = Color3.fromRGB(255, 230, 150), Range = 30, Brightness = 1.5, Shadows = false }, core)
-	ghost(cylinder(station, "ColumnCap", 3, 0.6, CFrame.new(0, 10.2, 0), COLOR_METAL, Enum.Material.Metal))
+	local core = ghost(ball(station, "ColumnCore", 1.8, CFrame.new(0, 6, 0), Color3.fromRGB(255, 226, 120)))
+	make("PointLight", { Color = Color3.fromRGB(255, 226, 150), Range = 22, Brightness = 0.7, Shadows = false }, core)
+	ghost(cylinder(station, "ColumnCap", 3.4, 0.6, CFrame.new(0, 10.3, 0), COLOR_METAL, Enum.Material.Metal))
 
 	return {
 		root = root,
@@ -1560,21 +1873,136 @@ function MapBuilder.build(config)
 	}
 end
 
--- Platzhalter-Ei: eine gestreckte Kugel mit Prompt, Zeitanzeige und Diebstahl-Markierung.
-function MapBuilder.buildEgg(config, eggId)
+-- Eier --------------------------------------------------------------------------
+-- Jeder Ei-Typ hat eine eigene Schale und Verzierung. Die Verzierungen haengen
+-- per Weld am Ei und bewegen sich mit, auch wenn jemand das Ei traegt.
+
+local SHELL_MATERIAL = {
+	Kuehl = Enum.Material.Ice,
+	Tresor = Enum.Material.Metal,
+}
+
+-- Punkt auf der Eischale. theta: 0 oben bis pi unten, phi: rundherum.
+local function surfaceFrame(theta, phi, sink)
+	local s = math.sin(theta)
+	local point = Vector3.new(EGG_RADII.X * s * math.cos(phi), EGG_RADII.Y * math.cos(theta), EGG_RADII.Z * s * math.sin(phi))
+	local normal = Vector3.new(
+		point.X / (EGG_RADII.X * EGG_RADII.X),
+		point.Y / (EGG_RADII.Y * EGG_RADII.Y),
+		point.Z / (EGG_RADII.Z * EGG_RADII.Z)
+	).Unit
+	local at = point - normal * (sink or 0)
+	return CFrame.lookAt(at, at + normal)
+end
+
+local function attach(egg, part)
+	ghost(part)
+	part.Anchored = false
+	part.Massless = true
+	part.CastShadow = false
+	local weld = Instance.new("Weld")
+	weld.Name = "DecorWeld"
+	weld.Part0 = egg
+	weld.Part1 = part
+	weld.C0 = egg.CFrame:Inverse() * part.CFrame
+	weld.Parent = part
+	part.Parent = egg
+	return part
+end
+
+local eggDecor = {}
+
+-- Labor-Ei: cremeweiss mit braunen Flecken, jedes Ei mit eigenem Muster.
+eggDecor.Labor = function(egg, eggType, eggId)
+	local accent = rgb(eggType.accent)
+	for index = 1, 6 do
+		local theta = 0.6 + hash(eggId, index) * 1.9
+		local phi = hash(index, eggId) * math.pi * 2
+		local size = 0.35 + hash(eggId + index, 3) * 0.4
+		attach(egg, blob(nil, "Spot", Vector3.new(size, size * 0.8, 0.2), surfaceFrame(theta, phi, 0.06), accent))
+	end
+end
+
+-- Kuehlfach-Ei: eisblau mit Schneehaube und Eiskristallen.
+eggDecor.Kuehl = function(egg, eggType, eggId)
+	attach(egg, blob(nil, "SnowCap", Vector3.new(1.5, 0.55, 1.5), CFrame.new(0, 1.2, 0), Color3.fromRGB(250, 252, 255)))
+	for index = 1, 4 do
+		local theta = 0.9 + hash(eggId, index) * 1.3
+		local phi = (index / 4 + hash(index, eggId) * 0.2) * math.pi * 2
+		local crystal = block(nil, "Frost", Vector3.new(0.35, 0.35, 0.35), surfaceFrame(theta, phi, 0.1) * CFrame.Angles(0, 0, math.rad(45)), Color3.fromRGB(235, 248, 255), Enum.Material.Glass)
+		crystal.Transparency = 0.15
+		attach(egg, crystal)
+	end
+end
+
+-- Tresor-Ei: dunkles Metall, goldene Baender, Zahlenschloss und Nieten.
+eggDecor.Tresor = function(egg, eggType)
+	local gold = rgb(eggType.accent)
+	for _, y in ipairs({ -0.45, 0.45 }) do
+		local radius = EGG_RADII.X * math.sqrt(1 - (y / EGG_RADII.Y) ^ 2)
+		attach(egg, cylinder(nil, "Band", radius * 2 + 0.12, 0.22, CFrame.new(0, y, 0), gold, Enum.Material.Metal))
+	end
+	attach(egg, pipe(nil, "Dial", 0.75, 0.16, CFrame.new(0, 0, -EGG_RADII.Z + 0.02) * ALONG_Z, gold, Enum.Material.Metal))
+	attach(egg, block(nil, "DialMark", Vector3.new(0.08, 0.28, 0.05), CFrame.new(0, 0.18, -EGG_RADII.Z - 0.07), Color3.fromRGB(40, 40, 40)))
+	for _, phi in ipairs({ 5.7, 0.4, 1.2, 2.0, 2.8, 3.6 }) do
+		attach(egg, ball(nil, "Rivet", 0.18, surfaceFrame(math.pi / 2, phi, 0.02), gold, Enum.Material.Metal))
+	end
+end
+
+-- Kometen-Ei: tiefviolett mit Sternen, schraegem Ring und leisem Funkeln.
+eggDecor.Komet = function(egg, eggType, eggId)
+	local gold = rgb(eggType.accent)
+	local ring = attach(egg, cylinder(nil, "Ring", 3.4, 0.08, CFrame.Angles(math.rad(18), 0, math.rad(12)), gold, Enum.Material.Glass))
+	ring.Transparency = 0.25
+	for index = 1, 7 do
+		local theta = 0.5 + hash(eggId, index) * 2.1
+		local phi = hash(index, eggId + 7) * math.pi * 2
+		attach(egg, ball(nil, "Star", 0.16 + hash(index, 2) * 0.1, surfaceFrame(theta, phi, 0), Color3.fromRGB(255, 245, 190), Enum.Material.Neon))
+	end
+	make("ParticleEmitter", {
+		Name = "Sparkles",
+		Rate = 4,
+		Lifetime = NumberRange.new(0.8, 1.4),
+		Speed = NumberRange.new(0.5, 1.5),
+		SpreadAngle = Vector2.new(180, 180),
+		Color = ColorSequence.new(gold),
+		Size = NumberSequence.new(0.18, 0),
+		LightEmission = 0.5,
+	}, egg)
+end
+
+local function findEggType(config, typeId)
+	for _, eggType in ipairs(config.EggTypes) do
+		if eggType.id == typeId then
+			return eggType
+		end
+	end
+	return config.EggTypes[1]
+end
+
+-- Baut ein Ei mit Prompt, Anzeige (Name in Seltenheitsfarbe, Status darunter)
+-- und Diebstahl-Markierung. Epische und legendaere Eier tragen eine Lichtsaeule.
+function MapBuilder.buildEgg(config, eggId, typeId)
+	local eggType = findEggType(config, typeId)
+	local rarity = config.Rarities[eggType.rarity]
 	local part = make("Part", {
 		Name = "Egg" .. eggId,
-		Size = Vector3.new(2.2, MapBuilder.EGG_HALF_HEIGHT * 2, 2.2),
-		Color = Color3.fromRGB(255, 244, 214),
-		Material = Enum.Material.SmoothPlastic,
+		Size = Vector3.new(EGG_RADII.X * 2, EGG_RADII.Y * 2, EGG_RADII.Z * 2),
+		Color = rgb(eggType.shell),
+		Material = SHELL_MATERIAL[eggType.id] or Enum.Material.SmoothPlastic,
 		Anchored = true,
 		CanCollide = false,
 		Massless = true,
 		TopSurface = Enum.SurfaceType.Smooth,
 		BottomSurface = Enum.SurfaceType.Smooth,
 	}, nil)
+	if eggType.id == "Komet" then
+		part.Reflectance = 0.15
+	end
+	part:SetAttribute("EggType", eggType.id)
+	part:SetAttribute("Rarity", eggType.rarity)
 	make("SpecialMesh", { MeshType = Enum.MeshType.Sphere }, part)
-	prompt(part, "Ei nehmen", "Labor-Ei", config)
+	prompt(part, "Ei nehmen", eggType.name, config)
 	make("Highlight", {
 		Name = "StolenHighlight",
 		FillColor = Color3.fromRGB(255, 60, 60),
@@ -1583,27 +2011,22 @@ function MapBuilder.buildEgg(config, eggId)
 		DepthMode = Enum.HighlightDepthMode.Occluded,
 		Enabled = false,
 	}, part)
-	local billboard = make("BillboardGui", {
-		Name = "Info",
-		Size = UDim2.new(0, 120, 0, 36),
-		StudsOffset = Vector3.new(0, 2.6, 0),
-		MaxDistance = 60,
-	}, part)
-	make("TextLabel", {
-		Name = "Label",
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		TextScaled = true,
-		Font = Enum.Font.GothamBold,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextStrokeTransparency = 0.3,
-		Text = "",
-	}, billboard)
+	local _, title = infoBoard(part, "Info", 160, 2.7, 45, rgb(rarity.color))
+	title.Text = eggType.name
+
+	local decorate = eggDecor[eggType.id]
+	if decorate then
+		decorate(part, eggType, eggId)
+	end
+	if rarity.wow then
+		local beam = attach(part, cylinder(nil, "LightBeam", 1.4, 26, CFrame.new(0, 14, 0), rgb(rarity.color)))
+		beam.Transparency = 0.82
+	end
 	return part
 end
 
--- Schlupfeffekt: unsichtbarer Traeger mit Partikelstoss und Knack-Sound.
-function MapBuilder.buildHatchBurst(config, position)
+-- Schlupfeffekt: unsichtbarer Traeger mit Splittern in der Seltenheitsfarbe.
+function MapBuilder.buildHatchBurst(config, position, color)
 	local part = make("Part", {
 		Name = "HatchBurst",
 		Size = Vector3.new(1, 1, 1),
@@ -1618,87 +2041,246 @@ function MapBuilder.buildHatchBurst(config, position)
 		Lifetime = NumberRange.new(0.4, 0.8),
 		Speed = NumberRange.new(8, 14),
 		SpreadAngle = Vector2.new(180, 180),
-		Color = ColorSequence.new(Color3.fromRGB(255, 244, 214)),
+		Color = ColorSequence.new(color and rgb(color) or Color3.fromRGB(255, 244, 214)),
 		Size = NumberSequence.new(0.5),
 	}, part)
 	sound(part, "Crack", config.Sounds.EggCrack)
 	return part
 end
 
--- Platzhalter-Kreaturen aus runden Grundformen. Vorne ist -Z, der Drehpunkt liegt am Boden.
+-- Kreaturen ---------------------------------------------------------------------
+-- Aus Kugeln, Ellipsoiden und Zylindern modelliert. Vorne ist -Z, der
+-- Drehpunkt liegt am Boden. Die Teilenamen nutzt das Clientskript fuer die
+-- Bewegungen (Scheren, Beine, Schwanz, Fluegel). Jeder Bauplan gibt den
+-- Koerper und die Gesamthoehe zurueck.
+
 local creatureBuilders = {}
 
-local function addEyes(model, y, z, spread)
+local WHITE = Color3.fromRGB(255, 255, 255)
+local INK = Color3.fromRGB(28, 26, 34)
+
+-- Augen mit Pupille und Glanzpunkt, Blick nach vorn.
+local function addEyes(model, y, z, spread, size)
 	for _, sign in ipairs({ -1, 1 }) do
-		ghost(ball(model, "EyeWhite", 0.8, CFrame.new(sign * spread, y, z), Color3.fromRGB(255, 255, 255)))
-		ghost(ball(model, "Pupil", 0.4, CFrame.new(sign * spread, y, z - 0.3), Color3.fromRGB(20, 20, 25)))
+		ball(model, "EyeWhite", size, CFrame.new(sign * spread, y, z), WHITE)
+		ball(model, "Pupil", size * 0.55, CFrame.new(sign * spread, y, z - size * 0.28), INK)
+		ball(model, "EyeShine", size * 0.2, CFrame.new(sign * spread + size * 0.12, y + size * 0.15, z - size * 0.45), WHITE)
 	end
 end
 
 creatureBuilders["Waffelkrabbe"] = function(model)
-	local waffle = Color3.fromRGB(222, 170, 90)
-	local red = Color3.fromRGB(235, 90, 70)
-	local body = ghost(cylinder(model, "Body", 3.4, 0.9, CFrame.new(0, 1.1, 0), waffle))
-	ghost(cylinder(model, "Syrup", 2.4, 0.2, CFrame.new(0, 1.6, 0), Color3.fromRGB(150, 80, 30)))
-	ghost(ball(model, "Butter", 0.8, CFrame.new(0.3, 1.8, 0.2), Color3.fromRGB(255, 235, 140)))
-	for _, sign in ipairs({ -1, 1 }) do
-		ghost(pipe(model, "Arm", 0.5, 1.4, CFrame.new(sign * 2, 1.2, -0.7), red))
-		ghost(ball(model, "Claw", 1.4, CFrame.new(sign * 2.8, 1.4, -0.9), red))
-		for _, z in ipairs({ -0.8, 0, 0.8 }) do
-			ghost(ball(model, "Foot", 0.6, CFrame.new(sign * 1.5, 0.3, z), waffle))
+	local waffle = Color3.fromRGB(226, 172, 92)
+	local waffleDark = Color3.fromRGB(176, 120, 56)
+	local red = Color3.fromRGB(230, 82, 64)
+	local redLight = Color3.fromRGB(248, 146, 118)
+	local body = blob(model, "Body", Vector3.new(3.4, 1.3, 2.8), CFrame.new(0, 1.15, 0), waffle)
+	blob(model, "WaffleTop", Vector3.new(2.9, 0.35, 2.4), CFrame.new(0, 1.72, 0), Color3.fromRGB(236, 186, 104))
+	for _, x in ipairs({ -0.45, 0.45 }) do
+		for _, z in ipairs({ -0.4, 0.4 }) do
+			block(model, "Pocket", Vector3.new(0.55, 0.08, 0.5), CFrame.new(x, 1.86, z), waffleDark)
 		end
-		ghost(cylinder(model, "EyeStalk", 0.25, 0.8, CFrame.new(sign * 0.6, 1.9, -1.2), waffle))
 	end
-	addEyes(model, 2.4, -1.2, 0.6)
-	return body
+	blob(model, "Syrup", Vector3.new(1.3, 0.22, 1.0), CFrame.new(-0.25, 1.9, 0.35), Color3.fromRGB(150, 78, 28))
+	block(model, "Butter", Vector3.new(0.6, 0.32, 0.6), CFrame.new(0.3, 2.0, -0.15) * CFrame.Angles(0, math.rad(20), 0), Color3.fromRGB(255, 230, 140))
+	for _, sign in ipairs({ -1, 1 }) do
+		-- Schere: Arm, Gelenk, zwei Backen
+		pipe(model, "ArmUpper", 0.45, 1.3, CFrame.new(sign * 1.9, 1.15, -0.7) * CFrame.Angles(0, math.rad(sign * 25), 0), red)
+		ball(model, "Elbow", 0.6, CFrame.new(sign * 2.5, 1.2, -1.0), red)
+		blob(model, "ClawTop", Vector3.new(0.8, 0.55, 1.3), CFrame.new(sign * 2.65, 1.5, -1.6) * CFrame.Angles(math.rad(-15), 0, 0), red)
+		blob(model, "ClawBottom", Vector3.new(0.7, 0.4, 1.1), CFrame.new(sign * 2.65, 1.05, -1.5) * CFrame.Angles(math.rad(15), 0, 0), redLight)
+		-- drei Beine pro Seite
+		for _, z in ipairs({ -0.6, 0.2, 1.0 }) do
+			pipe(model, "Leg", 0.3, 1.3, CFrame.new(sign * 1.75, 0.55, z) * CFrame.Angles(0, 0, math.rad(sign * -35)), waffleDark)
+			ball(model, "Foot", 0.4, CFrame.new(sign * 2.25, 0.2, z), waffleDark)
+		end
+		cylinder(model, "EyeStalk", 0.22, 0.9, CFrame.new(sign * 0.55, 2.05, -1.0), waffleDark)
+	end
+	addEyes(model, 2.65, -1.0, 0.55, 0.7)
+	blob(model, "Mouth", Vector3.new(0.7, 0.16, 0.2), CFrame.new(0, 1.05, -1.36), Color3.fromRGB(96, 42, 26))
+	return body, 3.0
 end
 
 creatureBuilders["Toaster-Gecko"] = function(model)
-	local green = Color3.fromRGB(110, 190, 120)
-	local body = ghost(pipe(model, "Body", 2.4, 3, CFrame.new(0, 1.5, 0) * ALONG_Z, Color3.fromRGB(205, 210, 220), Enum.Material.Metal))
-	ghost(block(model, "Toast", Vector3.new(1.2, 0.9, 0.3), CFrame.new(0, 2.8, 0), Color3.fromRGB(200, 140, 70)))
-	ghost(ball(model, "Lever", 0.5, CFrame.new(1.3, 1.6, 0.6), Color3.fromRGB(40, 40, 50)))
-	ghost(ball(model, "Head", 1.9, CFrame.new(0, 1.6, -2.2), green))
-	ghost(pipe(model, "Tail", 0.8, 2.6, CFrame.new(0, 1, 2.6) * ALONG_Z, green))
-	ghost(ball(model, "TailTip", 0.9, CFrame.new(0, 1, 4), green))
-	for _, sign in ipairs({ -1, 1 }) do
-		ghost(ball(model, "Foot", 0.8, CFrame.new(sign * 1.3, 0.4, -0.9), green))
-		ghost(ball(model, "Foot", 0.8, CFrame.new(sign * 1.3, 0.4, 0.9), green))
+	local chrome = Color3.fromRGB(214, 220, 228)
+	local dark = Color3.fromRGB(40, 40, 48)
+	local green = Color3.fromRGB(104, 196, 112)
+	local greenLight = Color3.fromRGB(140, 214, 136)
+	local greenDark = Color3.fromRGB(62, 140, 74)
+	local crust = Color3.fromRGB(176, 108, 48)
+	local crumb = Color3.fromRGB(236, 192, 122)
+	-- Toaster mit runden Kanten
+	local body = block(model, "Body", Vector3.new(2.4, 1.9, 2.6), CFrame.new(0, 1.6, 0), chrome, Enum.Material.Metal)
+	block(model, "BodyLong", Vector3.new(2.0, 1.9, 3.0), CFrame.new(0, 1.6, 0), chrome, Enum.Material.Metal)
+	for _, x in ipairs({ -1.0, 1.0 }) do
+		for _, z in ipairs({ -1.3, 1.3 }) do
+			cylinder(model, "Corner", 0.4, 1.9, CFrame.new(x, 1.6, z), chrome, Enum.Material.Metal)
+		end
 	end
-	addEyes(model, 2.2, -2.7, 0.55)
-	return body
+	for _, x in ipairs({ -0.45, 0.45 }) do
+		block(model, "Slot", Vector3.new(0.35, 0.05, 2.0), CFrame.new(x, 2.56, 0), dark)
+	end
+	block(model, "Toast", Vector3.new(0.22, 1.15, 1.5), CFrame.new(-0.45, 2.75, 0), crust)
+	block(model, "ToastFace", Vector3.new(0.24, 0.95, 1.3), CFrame.new(-0.45, 2.75, 0), crumb)
+	block(model, "Toast2", Vector3.new(0.22, 1.15, 1.5), CFrame.new(0.45, 2.55, 0), crust)
+	block(model, "Toast2Face", Vector3.new(0.24, 0.95, 1.3), CFrame.new(0.45, 2.55, 0), crumb)
+	block(model, "LeverSlot", Vector3.new(0.06, 1.1, 0.25), CFrame.new(1.22, 1.6, 0.9), dark)
+	block(model, "Lever", Vector3.new(0.5, 0.22, 0.35), CFrame.new(1.45, 2.0, 0.9), dark)
+	pipe(model, "Dial", 0.5, 0.1, CFrame.new(1.24, 1.2, -0.6), dark)
+	-- Gecko-Beine mit breiten Haftfuessen
+	for _, sign in ipairs({ -1, 1 }) do
+		for _, z in ipairs({ -0.9, 0.9 }) do
+			blob(model, "Thigh", Vector3.new(0.6, 1.0, 0.6), CFrame.new(sign * 1.3, 0.7, z) * CFrame.Angles(0, 0, math.rad(sign * 25)), green)
+			blob(model, "Foot", Vector3.new(0.85, 0.22, 0.9), CFrame.new(sign * 1.55, 0.11, z - 0.1), greenDark)
+		end
+	end
+	-- Kopf vorn
+	blob(model, "Head", Vector3.new(1.9, 1.5, 1.8), CFrame.new(0, 1.95, -2.1), green)
+	blob(model, "Snout", Vector3.new(1.4, 0.8, 1.0), CFrame.new(0, 1.7, -2.85), greenLight)
+	for _, sign in ipairs({ -1, 1 }) do
+		ball(model, "Nostril", 0.14, CFrame.new(sign * 0.22, 1.95, -3.25), INK)
+	end
+	blob(model, "Mouth", Vector3.new(1.0, 0.1, 0.25), CFrame.new(0, 1.45, -3.2), Color3.fromRGB(70, 40, 40))
+	addEyes(model, 2.5, -2.55, 0.55, 0.75)
+	blob(model, "Spot", Vector3.new(0.4, 0.12, 0.35), CFrame.new(0.35, 2.66, -1.9), greenDark)
+	blob(model, "Spot", Vector3.new(0.35, 0.12, 0.3), CFrame.new(-0.3, 2.66, -2.3), greenDark)
+	-- Schwanz hinten, nach oben eingerollt
+	blob(model, "Tail1", Vector3.new(0.9, 0.75, 1.4), CFrame.new(0, 1.05, 1.9), green)
+	blob(model, "TailSpot", Vector3.new(0.3, 0.1, 0.4), CFrame.new(0, 1.43, 1.9), greenDark)
+	blob(model, "Tail2", Vector3.new(0.7, 0.6, 1.2), CFrame.new(0, 0.95, 2.85), green)
+	blob(model, "Tail3", Vector3.new(0.5, 0.45, 1.0), CFrame.new(0, 1.1, 3.65) * CFrame.Angles(math.rad(-25), 0, 0), green)
+	ball(model, "TailTip", 0.42, CFrame.new(0, 1.35, 4.15), greenLight)
+	return body, 3.4
 end
 
 creatureBuilders["Pudding-Golem"] = function(model)
-	local pudding = Color3.fromRGB(250, 214, 120)
-	local caramel = Color3.fromRGB(140, 75, 30)
-	local body = ghost(cylinder(model, "Body", 3.6, 2.4, CFrame.new(0, 1.2, 0), pudding))
-	ghost(cylinder(model, "Top", 2.6, 1.4, CFrame.new(0, 3.1, 0), pudding))
-	ghost(cylinder(model, "Caramel", 2.8, 0.4, CFrame.new(0, 4, 0), caramel))
-	ghost(ball(model, "Drip", 0.7, CFrame.new(1.2, 3.6, -0.6), caramel))
-	ghost(ball(model, "Drip", 0.6, CFrame.new(-1.1, 3.5, 0.7), caramel))
-	ghost(ball(model, "Cherry", 0.9, CFrame.new(0, 4.6, 0), Color3.fromRGB(220, 40, 60)))
-	for _, sign in ipairs({ -1, 1 }) do
-		ghost(ball(model, "Arm", 1.4, CFrame.new(sign * 2.2, 1.8, -0.2), pudding))
+	local pudding = Color3.fromRGB(250, 212, 118)
+	local puddingDark = Color3.fromRGB(236, 194, 100)
+	local caramel = Color3.fromRGB(138, 72, 28)
+	local cream = Color3.fromRGB(255, 250, 240)
+	-- Untere Stufe mit Rillen hinten und Gesicht vorn
+	local body = cylinder(model, "Body", 3.8, 1.7, CFrame.new(0, 0.85, 0), pudding)
+	blob(model, "Tier1Top", Vector3.new(3.8, 0.8, 3.8), CFrame.new(0, 1.7, 0), pudding)
+	for index = 0, 4 do
+		local angle = math.rad(index * 45)
+		blob(model, "Rib", Vector3.new(0.45, 1.6, 0.75), CFrame.new(math.cos(angle) * 1.85, 0.85, math.sin(angle) * 1.85) * CFrame.Angles(0, -angle, 0), puddingDark)
 	end
-	addEyes(model, 3.2, -1.3, 0.5)
-	return body
+	-- Obere Stufe, Karamell, Sahne, Kirsche
+	cylinder(model, "Tier2", 2.8, 1.1, CFrame.new(0, 2.45, 0), pudding)
+	blob(model, "Tier2Top", Vector3.new(2.8, 0.7, 2.8), CFrame.new(0, 3.0, 0), pudding)
+	blob(model, "Caramel", Vector3.new(2.7, 0.45, 2.7), CFrame.new(0, 3.3, 0), caramel)
+	for _, degrees in ipairs({ 20, 95, 160, 230, 300 }) do
+		local angle = math.rad(degrees)
+		blob(model, "Drip", Vector3.new(0.32, 0.8, 0.28), CFrame.new(math.cos(angle) * 1.3, 2.95, math.sin(angle) * 1.3) * CFrame.Angles(0, -angle, 0), caramel)
+	end
+	blob(model, "Cream1", Vector3.new(1.3, 0.6, 1.3), CFrame.new(0, 3.7, 0), cream)
+	blob(model, "Cream2", Vector3.new(0.8, 0.5, 0.8), CFrame.new(0, 4.05, 0), cream)
+	ball(model, "Cherry", 0.6, CFrame.new(0, 4.45, 0), Color3.fromRGB(214, 36, 56))
+	pipe(model, "Stem", 0.08, 0.55, CFrame.new(0.12, 4.9, 0) * CFrame.Angles(0, 0, math.rad(70)), Color3.fromRGB(90, 120, 50))
+	addEyes(model, 1.25, -1.85, 0.62, 0.72)
+	blob(model, "Mouth", Vector3.new(0.8, 0.3, 0.2), CFrame.new(0, 0.7, -1.88), Color3.fromRGB(90, 40, 30))
+	for _, sign in ipairs({ -1, 1 }) do
+		blob(model, "Cheek", Vector3.new(0.45, 0.25, 0.1), CFrame.new(sign * 1.0, 0.85, -1.62), Color3.fromRGB(250, 150, 150))
+		blob(model, "Arm", Vector3.new(0.9, 1.3, 0.9), CFrame.new(sign * 2.15, 1.25, -0.2) * CFrame.Angles(0, 0, math.rad(sign * 20)), pudding)
+		ball(model, "Hand", 0.75, CFrame.new(sign * 2.4, 0.55, -0.25), puddingDark)
+	end
+	return body, 5.2
 end
 
--- Baut eine Kreatur am Stellplatz cframe. Das Modell bleibt verankert,
--- der Client bewegt es nur optisch.
+creatureBuilders["Donut-Drache"] = function(model)
+	local dough = Color3.fromRGB(214, 150, 80)
+	local doughLight = Color3.fromRGB(232, 176, 110)
+	local frosting = Color3.fromRGB(255, 136, 186)
+	local cream = Color3.fromRGB(250, 222, 166)
+	local body = blob(model, "Body", Vector3.new(2.0, 1.6, 2.6), CFrame.new(0, 2.6, 0), dough)
+	blob(model, "Belly", Vector3.new(1.5, 1.1, 2.0), CFrame.new(0, 2.3, -0.15), cream)
+	blob(model, "Frosting", Vector3.new(2.1, 0.8, 2.3), CFrame.new(0, 3.05, 0.1), frosting)
+	-- Streusel auf der Glasur
+	local sprinkleColors = {
+		Color3.fromRGB(255, 220, 60),
+		Color3.fromRGB(90, 170, 255),
+		Color3.fromRGB(110, 210, 120),
+		Color3.fromRGB(255, 255, 255),
+		Color3.fromRGB(255, 150, 60),
+		Color3.fromRGB(170, 110, 240),
+	}
+	for index, spot in ipairs({ { -0.4, -0.3 }, { 0.1, 0.3 }, { -0.5, 0.6 }, { 0.55, 0.5 }, { -0.1, -0.1 }, { 0.45, -0.35 } }) do
+		local x, z = spot[1], spot[2]
+		local inside = 1 - (x / 1.05) ^ 2 - ((z - 0.1) / 1.15) ^ 2
+		local y = 3.05 + 0.4 * math.sqrt(math.max(0, inside)) + 0.02
+		block(model, "Sprinkle", Vector3.new(0.08, 0.08, 0.32), CFrame.new(x, y, z) * CFrame.Angles(0, index * 1.1, 0), sprinkleColors[index])
+	end
+	-- Hals und Kopf
+	blob(model, "Neck", Vector3.new(0.95, 1.4, 0.95), CFrame.new(0, 3.35, -1.25) * CFrame.Angles(math.rad(-35), 0, 0), dough)
+	blob(model, "Head", Vector3.new(1.5, 1.2, 1.7), CFrame.new(0, 4.05, -1.95), dough)
+	blob(model, "Snout", Vector3.new(1.05, 0.8, 1.0), CFrame.new(0, 3.9, -2.8), doughLight)
+	for _, sign in ipairs({ -1, 1 }) do
+		ball(model, "Nostril", 0.14, CFrame.new(sign * 0.2, 4.1, -3.25), INK)
+		blob(model, "Horn", Vector3.new(0.22, 0.75, 0.22), CFrame.new(sign * 0.38, 4.75, -1.65) * CFrame.Angles(math.rad(30), 0, 0), cream)
+	end
+	blob(model, "Smile", Vector3.new(0.7, 0.1, 0.2), CFrame.new(0, 3.65, -3.15), Color3.fromRGB(110, 50, 40))
+	addEyes(model, 4.3, -2.5, 0.42, 0.6)
+	-- Fluegel aus Zuckerguss
+	for _, sign in ipairs({ -1, 1 }) do
+		local wing = blob(model, "Wing", Vector3.new(3.0, 0.14, 1.9), CFrame.new(sign * 1.95, 3.35, 0.25) * CFrame.Angles(0, 0, math.rad(sign * 12)), Color3.fromRGB(255, 170, 205))
+		wing.Transparency = 0.1
+		pipe(model, "WingBone", 0.2, 3.0, CFrame.new(sign * 1.95, 3.42, -0.55) * CFrame.Angles(0, 0, math.rad(sign * 12)), dough)
+	end
+	-- Schwanz mit Mini-Donut
+	blob(model, "Tail1", Vector3.new(0.8, 0.7, 1.3), CFrame.new(0, 2.3, 1.55), dough)
+	blob(model, "Tail2", Vector3.new(0.55, 0.5, 1.1), CFrame.new(0, 2.15, 2.45), dough)
+	pipe(model, "Donut", 1.1, 0.4, CFrame.new(0, 2.35, 3.25), dough)
+	pipe(model, "DonutFrosting", 0.95, 0.44, CFrame.new(0, 2.35, 3.25), frosting)
+	pipe(model, "DonutHole", 0.35, 0.48, CFrame.new(0, 2.35, 3.25), Color3.fromRGB(120, 70, 35))
+	-- Beine haengen beim Schweben herunter
+	for _, sign in ipairs({ -1, 1 }) do
+		for _, z in ipairs({ -0.7, 0.75 }) do
+			blob(model, "Leg", Vector3.new(0.42, 0.8, 0.42), CFrame.new(sign * 0.7, 1.85, z), dough)
+			ball(model, "Foot", 0.45, CFrame.new(sign * 0.72, 1.45, z - 0.05), doughLight)
+		end
+	end
+	return body, 5.2
+end
+
+local function findCreature(config, creatureId)
+	for _, creature in ipairs(config.Creatures) do
+		if creature.id == creatureId then
+			return creature
+		end
+	end
+	return config.Creatures[1]
+end
+
+-- Baut eine Kreatur am Stellplatz cframe, mit Anzeige von Name, Seltenheit und
+-- Einkommen. Das Modell bleibt verankert, der Client bewegt es nur optisch.
 function MapBuilder.buildCreature(config, creatureId, cframe)
-	local builder = creatureBuilders[creatureId] or creatureBuilders["Waffelkrabbe"]
+	local info = findCreature(config, creatureId)
+	local rarity = config.Rarities[info.rarity]
+	local builder = creatureBuilders[info.id] or creatureBuilders["Waffelkrabbe"]
 	local model = Instance.new("Model")
-	model.Name = creatureId
-	local body = builder(model)
+	model.Name = info.id
+	local body, height = builder(model)
+	local count = 0
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			ghost(part)
+			count = count + 1
+		end
+	end
+	local _, title, line = infoBoard(body, "Info", 170, height - body.Position.Y + 1.1, 50, WHITE)
+	title.Text = info.id
+	line.Text = info.rarity .. "  ·  +" .. info.coinsPerSecond .. "/s"
+	line.TextColor3 = rgb(rarity.color)
+
 	-- Kein PrimaryPart: so bleibt der Drehpunkt am Boden (WorldPivot) und
 	-- PivotTo stellt die Kreatur mit den Fuessen auf den Stellplatz.
 	model.WorldPivot = CFrame.new()
 	model:PivotTo(cframe)
-	model:SetAttribute("Kind", creatureId)
+	model:SetAttribute("Kind", info.id)
 	model:SetAttribute("Home", cframe)
-	local spec = config.Sounds[creatureId]
+	model:SetAttribute("PartCount", count)
+	model:SetAttribute("Rarity", info.rarity)
+	model:SetAttribute("Income", info.coinsPerSecond)
+	local spec = config.Sounds[info.id]
 	if spec then
 		sound(body, "Voice", spec)
 	end
@@ -1913,9 +2495,36 @@ tests["Schlupf: Kreatur ist sicher und verdient Muenzen"] = function(EggCore, Co
 	expect(not core:finishHatch(starterA, 0), "kein doppelter Schlupf")
 	core:payout()
 	core:payout()
-	expect(core.players[A].coins == 2 * Config.Creatures[1].coinsPerSecond, "A verdient Muenzen")
-	expect(core.players[B].coins == 0, "B hat noch keine Kreatur")
-	expect(core:pickCreature(0.999).id == Config.Creatures[#Config.Creatures].id, "hoher Wurf ergibt die seltenste Kreatur")
+	local income = 2 * Config.Creatures[1].coinsPerSecond
+	expect(core.players[A].coins == 0, "Muenzen liegen erst im Einsammelfeld")
+	expect(core.bases[baseA].pending == income, "Einsammelfeld fuellt sich")
+	expect(core:collect(B) == 0 and core.players[B].coins == 0, "B hat noch keine Kreatur")
+	expect(core:collect(A) == income and core.players[A].coins == income, "A sammelt ein")
+	expect(core:collect(A) == 0 and core.bases[baseA].pending == 0, "Feld ist danach leer")
+end
+
+tests["Ei-Typen: Seltenheit bestimmt, was schluepfen kann"] = function(EggCore, Config)
+	local core = EggCore.new(Config)
+	local first, last = Config.EggTypes[1], Config.EggTypes[#Config.EggTypes]
+	expect(core:pickEggType(0).id == first.id, "Wurf 0 ergibt den haeufigsten Typ")
+	expect(core:pickEggType(0.9999).id == last.id, "hoechster Wurf ergibt den seltensten Typ")
+	expect(core:pickCreature(0, first.id).id == first.creatures[1][1], "Wurf 0 ergibt die erste Kreatur des Typs")
+	expect(core:pickCreature(0.9999, last.id).id == last.creatures[#last.creatures][1], "hoher Wurf im seltensten Ei")
+	local allowed = {}
+	for _, entry in ipairs(first.creatures) do
+		allowed[entry[1]] = true
+	end
+	for step = 0, 99 do
+		expect(allowed[core:pickCreature(step / 100, first.id).id], "nur Kreaturen aus der Liste des Typs")
+	end
+	core:addPlayer(A)
+	local egg = core:spawnCenterEgg(1, last.id, 0)
+	expect(core.eggs[egg].type == last.id and core.eggs[egg].remaining == last.incubation, "Typ und Brutzeit gesetzt")
+	expect(core:take(A, egg, 1) and core:place(A, 1, 1, 2), "A setzt das seltene Ei ein")
+	core:tick(last.incubation)
+	expect(core:beginHatch(egg), "Schlupf beginnt")
+	local done, creatureId = core:finishHatch(egg, 0.9999)
+	expect(done and creatureId == last.creatures[#last.creatures][1], "seltenes Ei, seltene Kreatur")
 end
 
 tests["Fuenfter Spieler bekommt keine Basis"] = function(EggCore, Config)
@@ -1928,16 +2537,33 @@ tests["Fuenfter Spieler bekommt keine Basis"] = function(EggCore, Config)
 	expect(core:addPlayer(999) == 2, "frei gewordene Basis wird neu vergeben")
 end
 
-tests["Mitte fuellt sich nach der Wartezeit wieder auf"] = function(EggCore, Config)
+tests["Mitte: alle paar Sekunden ein neues Ei, liegen gebliebene verschwinden"] = function(EggCore, Config)
 	local core = EggCore.new(Config)
 	core:addPlayer(A)
-	expect(#core:fillCenter(0) == Config.CenterPedestals, "alle Sockel gefuellt")
+	local interval = Config.CenterSpawnInterval
+	expect(#core:fillCenter(0, 0) == 1, "erstes Ei erscheint sofort")
+	expect(#core:fillCenter(interval - 0.5, 0) == 0, "Wartezeit laeuft")
+	expect(#core:fillCenter(interval, 0.9999) == 1, "zweites Ei nach der Wartezeit")
+	expect(core.eggs[core.center[2]].type == Config.EggTypes[#Config.EggTypes].id, "Wurf bestimmt den Typ")
+	for index = 2, Config.CenterPedestals + 2 do
+		core:fillCenter(index * interval, 0)
+	end
+	local count = 0
+	for _ in pairs(core.center) do
+		count = count + 1
+	end
+	expect(count == Config.CenterPedestals, "nie mehr Eier als Sockel")
+
+	-- Alle Eier liegen seit spaetestens Sekunde 30. A nimmt eins kurz vor Ablauf.
 	local egg = core.center[1]
-	expect(core:take(A, egg, 1), "A nimmt Ei")
-	expect(#core:fillCenter(50) == 0, "Sockel bleibt reserviert, solange das Ei unterwegs ist")
-	expect(core:place(A, 1, 1, 60), "A setzt Ei ein")
-	expect(#core:fillCenter(60 + Config.CenterRespawn - 1) == 0, "Wartezeit laeuft")
-	expect(#core:fillCenter(60 + Config.CenterRespawn) == 1, "neues Ei erscheint")
+	local late = 30 + Config.CenterEggLifetime
+	expect(core:take(A, egg, late - 1), "A nimmt Ei")
+	core:expire(late + 1)
+	expect(core.eggs[egg] ~= nil and core.eggs[egg].state == "Carried", "getragenes Ei verschwindet nicht durch die Liegezeit")
+	expect(core.center[2] == nil, "liegen gebliebene Eier sind weg")
+	expect(core.center[1] == egg, "Sockel bleibt reserviert, solange das Ei unterwegs ist")
+	expect(core:place(A, 1, 1, late + 2), "A setzt Ei ein")
+	expect(core.center[1] == nil, "Sockel ist wieder frei")
 end
 
 -- Fuehrt alle Tests aus. Rueckgabe: Anzahl bestanden, Anzahl fehlgeschlagen, Liste der Fehler.
@@ -1970,54 +2596,101 @@ return CoreSelfTest
 </Item>
 <Item class="StarterPlayer" referent="RBX13"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts" referent="RBX12"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="LocalScript" referent="RBX11"><Properties><string name="Name">EiAlarmClient</string><ProtectedString name="Source"><![CDATA[-- Ei-Alarm! – Clientskript (LocalScript in StarterPlayer/StarterPlayerScripts).
 --
--- Nur Anzeige: Hinweisbanner, passende Prompts, zappelndes Ei und die
--- Platzhalter-Bewegungen der Kreaturen. Der Client entscheidet nichts.
--- Alles, was hier laeuft, darf manipuliert werden, ohne dass jemand einen
--- Vorteil bekommt.
+-- Nur Anzeige: Hinweisbanner, grosse Ankuendigungen fuer seltene Funde,
+-- Muenz-Popups, passende Prompts, zappelnde und herabfallende Eier und die
+-- Bewegungen der Kreaturen. Der Client entscheidet nichts. Alles, was hier
+-- laeuft, darf manipuliert werden, ohne dass jemand einen Vorteil bekommt.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
 local player = Players.LocalPlayer
 local sharedFolder = ReplicatedStorage:WaitForChild("EiAlarm")
 local Config = require(sharedFolder:WaitForChild("Config"))
-local notifyEvent = sharedFolder:WaitForChild("Remotes"):WaitForChild("Notify")
+local remotes = sharedFolder:WaitForChild("Remotes")
+local notifyEvent = remotes:WaitForChild("Notify")
+local effectEvent = remotes:WaitForChild("Effect")
 local world = workspace:WaitForChild("EiAlarm")
 local eggFolder = world:WaitForChild("Eggs")
 local creatureFolder = world:WaitForChild("Creatures")
 
 local CARRY_OFFSET = CFrame.new(Config.CarryOffset[1], Config.CarryOffset[2], Config.CarryOffset[3])
+local ANIMATION_RANGE = 160 -- weiter entfernte Kreaturen stehen still (spart Leistung auf Handys)
+local DROP_TIME = 0.55
+local DROP_HEIGHT = 5
 
--- Hinweisbanner ----------------------------------------------------------------
+local function rgb(c)
+	return Color3.fromRGB(c[1], c[2], c[3])
+end
+
+local function label(parent, props)
+	local text = Instance.new("TextLabel")
+	text.BackgroundTransparency = 1
+	text.Font = Enum.Font.GothamBold
+	text.TextScaled = true
+	text.TextColor3 = Color3.fromRGB(255, 255, 255)
+	for key, value in pairs(props) do
+		text[key] = value
+	end
+	text.Parent = parent
+	return text
+end
+
+-- Oberflaeche ----------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "EiAlarmHud"
 gui.ResetOnSpawn = false
 
-local banner = Instance.new("TextLabel")
-banner.Name = "Banner"
-banner.AnchorPoint = Vector2.new(0.5, 0)
-banner.Position = UDim2.new(0.5, 0, 0.1, 0)
-banner.Size = UDim2.new(0.7, 0, 0, 44)
-banner.BackgroundTransparency = 0.15
-banner.TextColor3 = Color3.fromRGB(255, 255, 255)
-banner.Font = Enum.Font.GothamBold
-banner.TextScaled = true
-banner.Visible = false
-banner.Parent = gui
-
+local banner = label(gui, {
+	Name = "Banner",
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0.1, 0),
+	Size = UDim2.new(0.7, 0, 0, 44),
+	BackgroundTransparency = 0.15,
+	Visible = false,
+})
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = banner
-
 local padding = Instance.new("UIPadding")
 padding.PaddingTop = UDim.new(0, 8)
 padding.PaddingBottom = UDim.new(0, 8)
 padding.PaddingLeft = UDim.new(0, 12)
 padding.PaddingRight = UDim.new(0, 12)
 padding.Parent = banner
+
+-- Grosse Ankuendigung: kurzer Farbblitz, Schriftzug springt auf und wackelt
+local flash = Instance.new("Frame")
+flash.Name = "Flash"
+flash.Size = UDim2.new(1, 0, 1, 0)
+flash.BackgroundTransparency = 1
+flash.BorderSizePixel = 0
+flash.Parent = gui
+
+local wowTitle = label(gui, {
+	Name = "WowTitle",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.3, 0),
+	Size = UDim2.new(0.8, 0, 0, 90),
+	Font = Enum.Font.GothamBlack,
+	TextStrokeTransparency = 0,
+	TextStrokeColor3 = Color3.fromRGB(30, 20, 40),
+	Visible = false,
+})
+local wowScale = Instance.new("UIScale")
+wowScale.Parent = wowTitle
+local wowText = label(gui, {
+	Name = "WowText",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.3, 70),
+	Size = UDim2.new(0.7, 0, 0, 36),
+	TextStrokeTransparency = 0.2,
+	Visible = false,
+})
 
 gui.Parent = player:WaitForChild("PlayerGui")
 
@@ -2044,6 +2717,167 @@ notifyEvent.OnClientEvent:Connect(function(text, kind)
 			banner.Visible = false
 		end
 	end)
+end)
+
+-- Effekte in der Welt ------------------------------------------------------------
+
+local function effectPart(name, position)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Transparency = 1
+	part.Size = Vector3.new(0.2, 0.2, 0.2)
+	part.CFrame = CFrame.new(position)
+	return part
+end
+
+-- Schockwelle am Boden und Funkenregen, bei grossen Funden mit Lichtsaeule.
+local function worldBurst(position, color, big)
+	local ring = effectPart("Shockwave", position)
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Material = Enum.Material.SmoothPlastic
+	ring.Color = color
+	ring.Transparency = 0.25
+	ring.Size = Vector3.new(0.2, 2, 2)
+	ring.CFrame = CFrame.new(position.X, 0.4, position.Z) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Parent = workspace
+	local reach = big and 36 or 14
+	TweenService:Create(ring, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(0.2, reach, reach),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(ring, 1)
+
+	local sparks = effectPart("Sparks", position)
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Rate = 0
+	emitter.Color = ColorSequence.new(color)
+	emitter.Lifetime = NumberRange.new(0.6, 1.2)
+	emitter.Speed = NumberRange.new(big and 14 or 8, big and 26 or 14)
+	emitter.SpreadAngle = Vector2.new(180, 180)
+	emitter.Size = NumberSequence.new(0.5, 0)
+	emitter.Acceleration = Vector3.new(0, -25, 0)
+	emitter.Parent = sparks
+	sparks.Parent = workspace
+	emitter:Emit(big and 60 or 25)
+	Debris:AddItem(sparks, 2)
+
+	if big then
+		local pillar = effectPart("LightPillar", position)
+		pillar.Shape = Enum.PartType.Cylinder
+		pillar.Material = Enum.Material.SmoothPlastic
+		pillar.Color = color
+		pillar.Transparency = 0.45
+		pillar.Size = Vector3.new(60, 0.6, 0.6)
+		pillar.CFrame = CFrame.new(position.X, 30, position.Z) * CFrame.Angles(0, 0, math.rad(90))
+		pillar.Parent = workspace
+		TweenService:Create(pillar, TweenInfo.new(1.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = Vector3.new(60, 7, 7),
+			Transparency = 1,
+		}):Play()
+		Debris:AddItem(pillar, 1.5)
+	end
+end
+
+-- Schwebender Text, der aufsteigt und verblasst.
+local function floatText(position, text, color)
+	local anchor = effectPart("Popup", position + Vector3.new(0, 2, 0))
+	local board = Instance.new("BillboardGui")
+	board.Size = UDim2.new(0, 170, 0, 40)
+	board.AlwaysOnTop = true
+	board.Parent = anchor
+	local line = label(board, {
+		Size = UDim2.new(1, 0, 1, 0),
+		Font = Enum.Font.GothamBlack,
+		Text = text,
+		TextColor3 = color,
+		TextStrokeTransparency = 0.2,
+	})
+	anchor.Parent = workspace
+	local info = TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(anchor, info, { CFrame = anchor.CFrame + Vector3.new(0, 4, 0) }):Play()
+	TweenService:Create(line, info, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	Debris:AddItem(anchor, 1.2)
+end
+
+local wowToken = 0
+local baseFieldOfView = nil
+
+local function showWow(data)
+	wowToken = wowToken + 1
+	local token = wowToken
+	local color = rgb(data.color)
+
+	flash.BackgroundColor3 = color
+	flash.BackgroundTransparency = 0.6
+	TweenService:Create(flash, TweenInfo.new(0.7), { BackgroundTransparency = 1 }):Play()
+
+	wowTitle.TextTransparency = 0
+	wowTitle.TextStrokeTransparency = 0
+	wowTitle.Visible = true
+	wowText.TextTransparency = 0
+	wowText.TextStrokeTransparency = 0.2
+	wowText.Visible = true
+	wowTitle.Text = data.title
+	wowTitle.TextColor3 = color
+	wowText.Text = data.text
+	wowScale.Scale = 0.3
+	TweenService:Create(wowScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	task.spawn(function()
+		for step = 1, 12 do
+			if wowToken ~= token then
+				return
+			end
+			wowTitle.Rotation = math.sin(step * 1.3) * (12 - step) * 0.6
+			task.wait(0.03)
+		end
+		wowTitle.Rotation = 0
+	end)
+	task.delay(2.6, function()
+		if wowToken ~= token then
+			return
+		end
+		local fade = TweenInfo.new(0.5)
+		TweenService:Create(wowTitle, fade, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		TweenService:Create(wowText, fade, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		task.delay(0.5, function()
+			if wowToken == token then
+				wowTitle.Visible = false
+				wowText.Visible = false
+			end
+		end)
+	end)
+
+	if data.position then
+		worldBurst(data.position, color, true)
+	end
+	local camera = workspace.CurrentCamera
+	if camera then
+		baseFieldOfView = baseFieldOfView or camera.FieldOfView
+		camera.FieldOfView = baseFieldOfView + 8
+		TweenService:Create(camera, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			FieldOfView = baseFieldOfView,
+		}):Play()
+	end
+end
+
+effectEvent.OnClientEvent:Connect(function(data)
+	if type(data) ~= "table" then
+		return
+	end
+	if data.kind == "wow" then
+		showWow(data)
+	elseif data.kind == "collect" and data.position then
+		floatText(data.position, data.text, Color3.fromRGB(255, 214, 90))
+	elseif data.kind == "hatch" and data.position then
+		local color = rgb(data.color)
+		floatText(data.position, data.text, color)
+		worldBurst(data.position, color, false)
+	end
 end)
 
 -- Prompts ------------------------------------------------------------------
@@ -2088,7 +2922,7 @@ local function updatePrompts()
 	end
 end
 
--- Zappelndes Ei ----------------------------------------------------------------
+-- Eier: Zappeln beim Tragen, Herabfallen beim Erscheinen ---------------------------
 
 local function updateCarriedEggs(t)
 	for _, egg in ipairs(eggFolder:GetChildren()) do
@@ -2103,19 +2937,50 @@ local function updateCarriedEggs(t)
 	end
 end
 
--- Kreaturen ------------------------------------------------------------------
--- Platzhalter-Bewegungen, bis die Blender-Animationen importiert sind.
-
-local creatureState = setmetatable({}, { __mode = "k" })
-
-local function stateOf(model)
-	local state = creatureState[model]
-	if not state then
-		state = { startledAt = -10, nextStartle = 0 }
-		creatureState[model] = state
+local function bounceOut(x)
+	if x < 1 / 2.75 then
+		return 7.5625 * x * x
+	elseif x < 2 / 2.75 then
+		x = x - 1.5 / 2.75
+		return 7.5625 * x * x + 0.75
+	elseif x < 2.5 / 2.75 then
+		x = x - 2.25 / 2.75
+		return 7.5625 * x * x + 0.9375
 	end
-	return state
+	x = x - 2.625 / 2.75
+	return 7.5625 * x * x + 0.984375
 end
+
+local drops = {} -- [egg] = { start, rest }
+
+eggFolder.ChildAdded:Connect(function(egg)
+	-- Erst im naechsten Takt pruefen: dann sind Zustand und Position gesetzt.
+	task.defer(function()
+		if egg.Parent and egg.Anchored and egg:GetAttribute("State") == "Center" then
+			drops[egg] = { start = os.clock(), rest = egg.CFrame }
+		end
+	end)
+end)
+
+local function updateDrops(t)
+	for egg, drop in pairs(drops) do
+		local progress = (t - drop.start) / DROP_TIME
+		local stillHere = egg.Parent ~= nil and egg.Anchored and egg:GetAttribute("State") == "Center"
+		if not stillHere then
+			drops[egg] = nil
+		elseif progress >= 1 then
+			egg.CFrame = drop.rest
+			drops[egg] = nil
+		else
+			egg.CFrame = drop.rest + Vector3.new(0, (1 - bounceOut(progress)) * DROP_HEIGHT, 0)
+		end
+	end
+end
+
+-- Kreaturen ------------------------------------------------------------------
+-- Jede Art hat eine Koerperbewegung (body) und Gelenke fuer einzelne Teile
+-- (joints, nach Teilename). Ein Gelenk dreht sein Teil um einen Drehpunkt im
+-- Modellraum. side ist +1 fuer Teile rechts, -1 fuer Teile links.
 
 -- Dreieckslauf 0,1,2,3,4,3,2,1,... fuer das Hin und Her des Golems.
 local function triangle(step)
@@ -2133,7 +2998,7 @@ local function spitToast(model, home)
 	toast.Color = Color3.fromRGB(200, 140, 70)
 	toast.Material = Enum.Material.SmoothPlastic
 	toast.CanCollide = false
-	toast.CFrame = home * CFrame.new(0, 3, 0)
+	toast.CFrame = home * CFrame.new(0, 3.2, 0)
 	toast.Parent = workspace
 	toast.AssemblyLinearVelocity = Vector3.new(math.random(-6, 6), 30, math.random(-6, 6))
 	toast.AssemblyAngularVelocity = Vector3.new(8, 0, 6)
@@ -2162,42 +3027,250 @@ local function isStartled(model, home)
 	return false
 end
 
-local function animateCreature(model, t)
-	local home = model:GetAttribute("Home")
-	local kind = model:GetAttribute("Kind")
-	if not home or not kind then
-		return
+local function fixed(x, y, z)
+	local point = Vector3.new(x, y, z)
+	return function()
+		return point
 	end
-	local offset = (home.Position.X * 0.37 + home.Position.Z * 0.11) % 6.28
+end
 
-	if kind == "Waffelkrabbe" then
-		-- Huepft seitwaerts hin und her.
-		local phase = t * 2.2 + offset
-		model:PivotTo(home * CFrame.new(math.sin(phase * 0.5) * 2, math.abs(math.sin(phase * 2)) * 0.9, 0))
-	elseif kind == "Toaster-Gecko" then
-		-- Steht ruhig, springt beim Erschrecken hoch und spuckt Toast.
-		local state = stateOf(model)
-		if t >= state.nextStartle and isStartled(model, home) then
+local function group(joints, names, joint)
+	for _, name in ipairs(names) do
+		joints[name] = joint
+	end
+end
+
+local RIGS = {}
+
+-- Waffelkrabbe: huepft seitwaerts, klappert mit den Scheren, Beine trippeln.
+RIGS["Waffelkrabbe"] = {
+	body = function(t)
+		local phase = t * 2.2
+		return CFrame.new(math.sin(phase * 0.5) * 2, math.abs(math.sin(phase * 2)) * 0.7, 0)
+			* CFrame.Angles(0, 0, math.cos(phase * 0.5) * 0.12)
+	end,
+	joints = {},
+}
+RIGS["Waffelkrabbe"].joints.ClawTop = {
+	pivot = function(rest)
+		return rest.Position + Vector3.new(0, -0.15, 0.55)
+	end,
+	move = function(t, side)
+		local open = math.max(0, math.sin(t * 3 + side)) ^ 4
+		return CFrame.Angles(open * 0.6, 0, 0)
+	end,
+}
+group(RIGS["Waffelkrabbe"].joints, { "Leg", "Foot" }, {
+	pivot = function(rest, side)
+		return Vector3.new(side * 1.22, 0.92, rest.Position.Z)
+	end,
+	move = function(t, side, rest)
+		return CFrame.Angles(0, 0, side * math.sin(t * 14 + rest.Position.Z * 3) * 0.2)
+	end,
+})
+group(RIGS["Waffelkrabbe"].joints, { "EyeStalk", "EyeWhite", "Pupil", "EyeShine" }, {
+	pivot = function(_, side)
+		return Vector3.new(side * 0.55, 1.6, -1.0)
+	end,
+	move = function(t, side)
+		return CFrame.Angles(math.sin(t * 2.5 + side) * 0.12, 0, math.sin(t * 3 + side * 2) * 0.15)
+	end,
+})
+
+-- Toaster-Gecko: schaut sich um, wedelt mit dem Schwanz, springt beim
+-- Erschrecken hoch, der Toast schiesst heraus.
+RIGS["Toaster-Gecko"] = {
+	body = function(t, state, model, home)
+		if t >= (state.nextStartle or 0) and isStartled(model, home) then
 			state.startledAt = t
 			state.nextStartle = t + 3
 			spitToast(model, home)
 		end
-		local since = t - state.startledAt
-		local y = 0
+		local since = t - (state.startledAt or -10)
+		state.pop = 0
+		local y = math.sin(t * 2) * 0.03
 		if since < 0.45 then
-			y = math.sin(since / 0.45 * math.pi) * 1.4
+			state.pop = math.sin(since / 0.45 * math.pi)
+			y = state.pop * 1.4
 		end
-		model:PivotTo(home * CFrame.new(0, y, 0))
-	elseif kind == "Pudding-Golem" then
-		-- Stapft in Schritten vor und zurueck und wackelt nach jedem Schritt aus.
+		return CFrame.new(0, y, 0)
+	end,
+	joints = {},
+}
+group(RIGS["Toaster-Gecko"].joints, { "Head", "Snout", "Nostril", "Mouth", "EyeWhite", "Pupil", "EyeShine", "Spot" }, {
+	pivot = fixed(0, 1.9, -1.4),
+	move = function(t, _, _, state)
+		return CFrame.Angles(state.pop * 0.35, math.sin(t * 0.8) * 0.35, 0)
+	end,
+})
+group(RIGS["Toaster-Gecko"].joints, { "Tail1", "TailSpot", "Tail2", "Tail3", "TailTip" }, {
+	pivot = fixed(0, 1.05, 1.3),
+	move = function(t)
+		return CFrame.Angles(0, math.sin(t * 2.2) * 0.3, 0)
+	end,
+})
+group(RIGS["Toaster-Gecko"].joints, { "Toast", "ToastFace" }, {
+	pivot = fixed(0, 0, 0),
+	move = function(_, _, _, state)
+		return CFrame.new(0, state.pop * 1.0, 0)
+	end,
+})
+RIGS["Toaster-Gecko"].joints.Lever = {
+	pivot = fixed(0, 0, 0),
+	move = function(_, _, _, state)
+		return CFrame.new(0, state.pop * 0.3, 0)
+	end,
+}
+
+-- Pudding-Golem: stapft vor und zurueck, die obere Stufe schwappt nach,
+-- die Arme schwingen mit.
+RIGS["Pudding-Golem"] = {
+	body = function(t, state)
 		local stepTime = 0.9
-		local clock = t + offset
-		local step = math.floor(clock / stepTime)
-		local since = clock - step * stepTime
+		local step = math.floor(t / stepTime)
+		local since = t - step * stepTime
 		local blend = math.min(since / 0.3, 1)
 		local position = triangle(step - 1) + (triangle(step) - triangle(step - 1)) * blend
-		local wobble = math.sin(since * 22) * math.exp(-since * 4.5) * 0.22
-		model:PivotTo(home * CFrame.new(0, 0, -position * 0.5) * CFrame.Angles(wobble, 0, wobble * 0.6))
+		state.wobble = math.sin(since * 22) * math.exp(-since * 4.5) * 0.22
+		state.swing = math.sin(t / stepTime * math.pi)
+		local lift = math.sin(blend * math.pi) * 0.2
+		return CFrame.new(0, lift, -position * 0.35) * CFrame.Angles(state.wobble * 0.4, 0, state.wobble * 0.25)
+	end,
+	joints = {},
+}
+group(RIGS["Pudding-Golem"].joints, { "Tier2", "Tier2Top", "Caramel", "Drip", "Cream1", "Cream2", "Cherry", "Stem" }, {
+	pivot = fixed(0, 1.9, 0),
+	move = function(_, _, _, state)
+		return CFrame.Angles(state.wobble * 1.3, 0, state.wobble * 0.8)
+	end,
+})
+group(RIGS["Pudding-Golem"].joints, { "Arm", "Hand" }, {
+	pivot = function(_, side)
+		return Vector3.new(side * 1.85, 1.8, -0.2)
+	end,
+	move = function(_, side, _, state)
+		return CFrame.Angles(state.swing * 0.35 * side, 0, 0)
+	end,
+})
+
+-- Donut-Drache: schwebt, schlaegt mit den Fluegeln, Kopf und Schwanz pendeln.
+RIGS["Donut-Drache"] = {
+	body = function(t)
+		return CFrame.new(0, 0.9 + math.sin(t * 2) * 0.3, 0)
+			* CFrame.Angles(math.sin(t * 2 + 0.5) * 0.05, math.sin(t * 0.6) * 0.25, 0)
+	end,
+	joints = {},
+}
+group(RIGS["Donut-Drache"].joints, { "Wing", "WingBone" }, {
+	pivot = function(_, side)
+		return Vector3.new(side * 0.6, 3.35, 0.25)
+	end,
+	move = function(t, side)
+		return CFrame.Angles(0, 0, side * (math.sin(t * 7) * 0.55 + 0.1))
+	end,
+})
+group(RIGS["Donut-Drache"].joints, { "Head", "Snout", "Nostril", "Smile", "EyeWhite", "Pupil", "EyeShine", "Horn" }, {
+	pivot = fixed(0, 3.4, -1.2),
+	move = function(t)
+		return CFrame.Angles(math.sin(t * 2 + 1) * 0.12, math.sin(t * 0.9) * 0.2, 0)
+	end,
+})
+group(RIGS["Donut-Drache"].joints, { "Tail1", "Tail2", "Donut", "DonutFrosting", "DonutHole" }, {
+	pivot = fixed(0, 2.4, 1.1),
+	move = function(t)
+		return CFrame.Angles(math.sin(t * 1.7) * 0.1, math.sin(t * 2.4) * 0.35, 0)
+	end,
+})
+group(RIGS["Donut-Drache"].joints, { "Leg", "Foot" }, {
+	pivot = function(rest, side)
+		return Vector3.new(side * 0.7, 2.2, rest.Position.Z)
+	end,
+	move = function(t, _, rest)
+		return CFrame.Angles(math.sin(t * 2 + rest.Position.Z * 2) * 0.25, 0, 0)
+	end,
+})
+
+local rigs = setmetatable({}, { __mode = "k" })
+
+-- Merkt sich beim ersten Sehen die Ruhelage jedes Teils relativ zum Stellplatz.
+local function rigOf(model)
+	local rig = rigs[model]
+	if rig then
+		return rig
+	end
+	local home = model:GetAttribute("Home")
+	local kind = model:GetAttribute("Kind")
+	local spec = kind and RIGS[kind]
+	if not home or not spec then
+		return nil
+	end
+	local parts = {}
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			parts[#parts + 1] = part
+		end
+	end
+	if #parts < (model:GetAttribute("PartCount") or 0) then
+		return nil -- noch nicht vollstaendig angekommen
+	end
+	rig = {
+		spec = spec,
+		home = home,
+		parts = parts,
+		rest = {},
+		joints = {},
+		sides = {},
+		pivots = {},
+		pivotsBack = {},
+		cframes = {},
+		state = {},
+		offset = (home.X * 0.37 + home.Z * 0.11) % 6.28,
+	}
+	local inverse = home:Inverse()
+	for index, part in ipairs(parts) do
+		local rest = inverse * part.CFrame
+		rig.rest[index] = rest
+		local joint = spec.joints[part.Name]
+		if joint then
+			local side = 1
+			if rest.X < 0 then
+				side = -1
+			end
+			local pivot = joint.pivot(rest, side)
+			rig.joints[index] = joint
+			rig.sides[index] = side
+			rig.pivots[index] = CFrame.new(pivot)
+			rig.pivotsBack[index] = CFrame.new(-pivot)
+		end
+	end
+	rigs[model] = rig
+	return rig
+end
+
+local function poseRig(rig, model, t)
+	local localTime = t + rig.offset
+	local base = rig.home * rig.spec.body(localTime, rig.state, model, rig.home)
+	for index = 1, #rig.parts do
+		local joint = rig.joints[index]
+		local rest = rig.rest[index]
+		if joint then
+			local turn = joint.move(localTime, rig.sides[index], rest, rig.state)
+			rig.cframes[index] = base * rig.pivots[index] * turn * rig.pivotsBack[index] * rest
+		else
+			rig.cframes[index] = base * rest
+		end
+	end
+	workspace:BulkMoveTo(rig.parts, rig.cframes, Enum.BulkMoveMode.FireCFrameChanged)
+end
+
+local function animateCreatures(t)
+	local camera = workspace.CurrentCamera
+	local eye = camera and camera.CFrame.Position
+	for _, model in ipairs(creatureFolder:GetChildren()) do
+		local rig = rigOf(model)
+		if rig and (eye == nil or (rig.home.Position - eye).Magnitude <= ANIMATION_RANGE) then
+			poseRig(rig, model, t)
+		end
 	end
 end
 
@@ -2207,9 +3280,8 @@ local promptTimer = 0
 RunService.RenderStepped:Connect(function(dt)
 	local t = os.clock()
 	updateCarriedEggs(t)
-	for _, model in ipairs(creatureFolder:GetChildren()) do
-		animateCreature(model, t)
-	end
+	updateDrops(t)
+	animateCreatures(t)
 	promptTimer = promptTimer + dt
 	if promptTimer >= 0.1 then
 		promptTimer = 0

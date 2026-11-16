@@ -2,7 +2,7 @@
 --
 -- Verbindet die Spielregeln aus EggCore mit der Welt: baut die Map, reagiert
 -- auf ProximityPrompts, prueft Reichweiten, faengt Diebe ab, laesst Eier
--- schluepfen und zahlt Muenzen aus. Der Client schickt keine eigenen Befehle.
+-- schluepfen, fuellt die Muenzfelder und kuendigt seltene Funde an. Der Client schickt keine eigenen Befehle.
 -- Jede Aktion laeuft ueber einen Prompt, den der Server selbst auswertet.
 
 local Players = game:GetService("Players")
@@ -26,6 +26,10 @@ remotes.Name = "Remotes"
 local notifyEvent = Instance.new("RemoteEvent")
 notifyEvent.Name = "Notify"
 notifyEvent.Parent = remotes
+-- Effect: reine Anzeige (grosse Ankuendigung, Muenz-Popup, Schlupf-Funkeln).
+local effectEvent = Instance.new("RemoteEvent")
+effectEvent.Name = "Effect"
+effectEvent.Parent = remotes
 remotes.Parent = sharedFolder
 
 local core = EggCore.new(Config)
@@ -68,6 +72,17 @@ local function notify(userId, text, kind)
 	if player then
 		notifyEvent:FireClient(player, text, kind or "info")
 	end
+end
+
+local function effectTo(userId, data)
+	local player = userId and Players:GetPlayerByUserId(userId)
+	if player then
+		effectEvent:FireClient(player, data)
+	end
+end
+
+local function effectAll(data)
+	effectEvent:FireAllClients(data)
 end
 
 local function nameOf(userId)
@@ -199,7 +214,8 @@ local function labelText(egg)
 		end
 		return seconds .. " s"
 	elseif egg.state == "Center" then
-		return "Labor-Ei"
+		local eggType = core.eggTypes[egg.type]
+		return eggType and eggType.rarity or ""
 	elseif egg.state == "Dropped" then
 		return "Am Boden!"
 	end
@@ -207,7 +223,7 @@ local function labelText(egg)
 end
 
 local function createEggPart(eggId)
-	local part = MapBuilder.buildEgg(Config, eggId)
+	local part = MapBuilder.buildEgg(Config, eggId, core.eggs[eggId].type)
 	part:SetAttribute("EggId", eggId)
 	part.Prompt.Triggered:Connect(function(player)
 		onEggPrompt(player, eggId)
@@ -373,6 +389,7 @@ local function spawnCreature(baseId, padIndex, creatureId, ownerId)
 	if voice then
 		voice:Play()
 	end
+	return model
 end
 
 local function clearCreatures(baseId)
@@ -403,17 +420,48 @@ local function hatch(eggId)
 	end
 	local ok, creatureId, padIndex, ownerId, baseId = core:finishHatch(eggId, rng:NextNumber())
 	if ok then
+		local info = core.creatureInfo[creatureId]
+		local rarity = Config.Rarities[info.rarity]
 		if part and part.Parent then
-			local burst = MapBuilder.buildHatchBurst(Config, part.Position)
+			local burst = MapBuilder.buildHatchBurst(Config, part.Position, rarity.color)
 			burst.Parent = map.root
 			burst.Shards:Emit(24)
 			burst.Crack:Play()
 			Debris:AddItem(burst, 3)
 		end
-		spawnCreature(baseId, padIndex, creatureId, ownerId)
-		notify(ownerId, "Geschlüpft: " .. creatureId .. "!", "good")
+		local model = spawnCreature(baseId, padIndex, creatureId, ownerId)
+		local position = model:GetAttribute("Home").Position
+		notify(ownerId, "Geschlüpft: " .. creatureId .. " (" .. info.rarity .. ", +" .. info.coinsPerSecond .. "/s)", "good")
+		if rarity.wow then
+			effectAll({ kind = "wow", title = rarity.title, text = nameOf(ownerId) .. " hat ausgebrütet: " .. creatureId .. "!", color = rarity.color, position = position })
+		else
+			effectTo(ownerId, { kind = "hatch", text = rarity.title, color = rarity.color, position = position })
+		end
 	end
 	flush()
+end
+
+-- Muenzfelder und seltene Eier --------------------------------------------------
+
+local function refreshCoinPad(baseId)
+	local base = map.bases[baseId]
+	local state = core.bases[baseId]
+	if state.owner then
+		base.coinLabel.Text = state.pending .. " Münzen  ·  +" .. core:incomeOf(baseId) .. "/s"
+	else
+		base.coinLabel.Text = "Frei"
+	end
+end
+
+-- Seltene Eier in der Mitte werden fuer alle gross angekuendigt.
+local function announceEgg(eggId)
+	local egg = core.eggs[eggId]
+	local part = eggParts[eggId]
+	local eggType = egg and core.eggTypes[egg.type]
+	local rarity = eggType and Config.Rarities[eggType.rarity]
+	if part and rarity and rarity.wow then
+		effectAll({ kind = "wow", title = rarity.title, text = eggType.name .. " in der Eierstation!", color = rarity.color, position = part.Position })
+	end
 end
 
 -- Spieler --------------------------------------------------------------------
@@ -477,6 +525,7 @@ local function onPlayerAdded(player)
 
 	core:spawnStarterEgg(userId)
 	flush()
+	refreshCoinPad(baseId)
 
 	player.CharacterAdded:Connect(function(character)
 		onCharacterAdded(player, character)
@@ -505,6 +554,7 @@ local function onPlayerRemoving(player)
 	core:removePlayer(userId, os.clock())
 	clearCreatures(baseId)
 	map.bases[baseId].sign.Text = "Frei"
+	refreshCoinPad(baseId)
 	coinValues[userId] = nil
 	flush()
 end
@@ -550,6 +600,22 @@ local function fastStep(now)
 			if humanoid.WalkSpeed ~= speed then
 				humanoid.WalkSpeed = speed
 			end
+
+			-- Auf dem eigenen Muenzfeld: Einnahmen gutschreiben
+			local pad = map.bases[state.base].coinPad
+			local offset = root.Position - pad.Position
+			local flat = Vector3.new(offset.X, 0, offset.Z)
+			if math.abs(offset.Y) < 6 and flat.Magnitude <= Config.CollectRange then
+				local amount = core:collect(player.UserId)
+				if amount > 0 then
+					local value = coinValues[player.UserId]
+					if value then
+						value.Value = state.coins
+					end
+					refreshCoinPad(state.base)
+					effectTo(player.UserId, { kind = "collect", text = "+" .. amount .. " Münzen", position = pad.Position })
+				end
+			end
 		end
 	end
 
@@ -560,7 +626,7 @@ end
 
 -- Einmal pro Sekunde: Eier nachfuellen, bruten, Zeitlimits, Muenzen.
 local function slowStep(dt, now)
-	core:fillCenter(now)
+	local spawned = core:fillCenter(now, rng:NextNumber())
 	for _, eggId in ipairs(core:tick(dt)) do
 		if core:beginHatch(eggId) then
 			task.spawn(hatch, eggId)
@@ -577,6 +643,12 @@ local function slowStep(dt, now)
 		end
 	end
 	flush()
+	for _, eggId in ipairs(spawned) do
+		announceEgg(eggId)
+	end
+	for baseId in ipairs(map.bases) do
+		refreshCoinPad(baseId)
+	end
 	for eggId, egg in pairs(core.eggs) do
 		local part = eggParts[eggId]
 		if part then

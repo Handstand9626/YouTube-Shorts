@@ -54,16 +54,16 @@ Regeln, die das Spiel fair halten:
 
 ## Map des ersten Builds
 
-Quadratische Halle, 120 × 120 Studs, Eierstation mit vier Sockeln in der Mitte. Vier Basen stehen vor den Mitten der vier Wände, 46 Studs vom Zentrum. Hinter jeder Basis führt eine Tür in die Lüftung, einen 8 Studs breiten Ringkorridor um die Halle.
+Quadratische Halle, 160 × 160 Studs, Eierstation mit acht Sockeln im Kreis. Vier Basen stehen vor den Mitten der vier Wände, 64 Studs vom Zentrum. Außen Wiese mit Bäumen. Hinter jeder Basis führt eine Tür in die Lüftung, einen 8 Studs breiten Ringkorridor um die Halle.
 
 | Strecke | Halle | Lüftung |
 | --- | --- | --- |
-| Nachbarbasis | ca. 65 Studs | ca. 170 Studs |
-| Gegenüberliegende Basis | ca. 92 Studs | ca. 300 Studs |
-| Tempo mit Ei | 13 | 16 |
+| Nachbarbasis | ca. 90 Studs | ca. 220 Studs |
+| Gegenüberliegende Basis | ca. 128 Studs | ca. 390 Studs |
+| Tempo mit Ei | 15 | 18 |
 | Sichtbar für den Besitzer | ja | nein, hinter Wänden |
 
-Der Besitzer läuft immer 16. In der Halle holt er den Dieb also ein, in der Lüftung nicht. Dafür ist der Weg dort zweieinhalb- bis dreimal so lang, und der Besitzer kann vor der Basis des Diebs warten. Ob das spannend genug ist, zeigt Phase 2.
+Der Besitzer läuft immer 18. In der Halle holt er den Dieb also ein, in der Lüftung nicht. Dafür ist der Weg dort zweieinhalb- bis dreimal so lang, und der Besitzer kann vor der Basis des Diebs warten. Ob das spannend genug ist, zeigt Phase 2.
 
 ## Offene Fragen für Phase 2
 

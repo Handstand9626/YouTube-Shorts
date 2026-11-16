@@ -14,10 +14,10 @@ Config.SlotsPerBase = 3
 Config.CreatureCap = 8
 
 -- Bewegung (Studs pro Sekunde)
-Config.WalkSpeed = 16
-Config.CarrySpeedHall = 13 -- offene Halle: kurz, aber das zappelnde Ei bremst
-Config.CarrySpeedVent = 16 -- Lueftung: laengerer Weg, dafuer volle Geschwindigkeit
-Config.StunSpeed = 6
+Config.WalkSpeed = 18
+Config.CarrySpeedHall = 15 -- offene Halle: kurz, aber das zappelnde Ei bremst
+Config.CarrySpeedVent = 18 -- Lueftung: laengerer Weg, dafuer volle Geschwindigkeit
+Config.StunSpeed = 7
 Config.StunTime = 1.5 -- so lange ist der abgefangene Dieb langsam und darf das Ei nicht aufheben
 
 -- Interaktion
@@ -36,15 +36,57 @@ Config.MinIncubationAfterSteal = 8 -- Mindestbrutzeit nach dem Sichern (Fenster 
 
 -- Brueten
 Config.StarterIncubation = 10
-Config.Incubation = 30
-Config.CenterPedestals = 4
-Config.CenterRespawn = 8 -- Sekunden, bis ein leerer Sockel ein neues Ei bekommt
+Config.StarterEggType = "Labor"
 
--- Kreaturen. weight = Schlupfchance (relativ), coinsPerSecond = Einkommen.
+-- Zentrale Eierstation: alle paar Sekunden erscheint ein neues Ei auf einem
+-- freien Sockel. Bleibt es liegen, verschwindet es nach einer Weile wieder.
+Config.CenterPedestals = 8
+Config.CenterSpawnInterval = 3
+Config.CenterEggLifetime = 40
+
+-- Muenzen sammeln sich im Einsammelfeld der Basis und werden beim Betreten gutgeschrieben.
+Config.CollectRange = 4
+
+-- Seltenheitsstufen. wow = true loest die grosse Ankuendigung fuer alle aus.
+Config.Rarities = {
+	["Gewöhnlich"] = { order = 1, color = { 205, 205, 205 }, wow = false, title = "GEWÖHNLICH" },
+	["Selten"] = { order = 2, color = { 90, 170, 255 }, wow = false, title = "SELTEN!" },
+	["Episch"] = { order = 3, color = { 190, 110, 255 }, wow = true, title = "EPISCH!" },
+	["Legendär"] = { order = 4, color = { 255, 200, 60 }, wow = true, title = "LEGENDÄR!" },
+}
+
+-- Kreaturen. coinsPerSecond = Einkommen. Welche Kreatur schluepft, bestimmt der Ei-Typ.
 Config.Creatures = {
-	{ id = "Waffelkrabbe", weight = 60, coinsPerSecond = 2 },
-	{ id = "Toaster-Gecko", weight = 30, coinsPerSecond = 5 },
-	{ id = "Pudding-Golem", weight = 10, coinsPerSecond = 12 },
+	{ id = "Waffelkrabbe", rarity = "Gewöhnlich", coinsPerSecond = 2 },
+	{ id = "Toaster-Gecko", rarity = "Selten", coinsPerSecond = 6 },
+	{ id = "Pudding-Golem", rarity = "Episch", coinsPerSecond = 15 },
+	{ id = "Donut-Drache", rarity = "Legendär", coinsPerSecond = 50 },
+}
+
+-- Ei-Typen. weight = Chance, in der Mitte zu erscheinen. incubation = Brutzeit.
+-- creatures = { Kreatur, Gewicht }: Schlupfchancen dieses Typs.
+-- Alle Eier sind nur erspielbar, nie kaeuflich.
+Config.EggTypes = {
+	{
+		id = "Labor", name = "Labor-Ei", rarity = "Gewöhnlich", weight = 70, incubation = 30,
+		shell = { 255, 244, 214 }, accent = { 170, 120, 80 },
+		creatures = { { "Waffelkrabbe", 60 }, { "Toaster-Gecko", 30 }, { "Pudding-Golem", 10 } },
+	},
+	{
+		id = "Kuehl", name = "Kühlfach-Ei", rarity = "Selten", weight = 22, incubation = 40,
+		shell = { 170, 220, 255 }, accent = { 255, 255, 255 },
+		creatures = { { "Waffelkrabbe", 25 }, { "Toaster-Gecko", 50 }, { "Pudding-Golem", 22 }, { "Donut-Drache", 3 } },
+	},
+	{
+		id = "Tresor", name = "Tresor-Ei", rarity = "Episch", weight = 7, incubation = 55,
+		shell = { 70, 76, 90 }, accent = { 240, 190, 60 },
+		creatures = { { "Toaster-Gecko", 30 }, { "Pudding-Golem", 55 }, { "Donut-Drache", 15 } },
+	},
+	{
+		id = "Komet", name = "Kometen-Ei", rarity = "Legendär", weight = 1, incubation = 75,
+		shell = { 110, 60, 190 }, accent = { 255, 230, 120 },
+		creatures = { { "Pudding-Golem", 40 }, { "Donut-Drache", 60 } },
+	},
 }
 
 -- Sounds. id leer lassen = stumm (Platzhalterphase).
@@ -56,18 +98,19 @@ Config.Sounds = {
 	["Waffelkrabbe"] = { id = "", volume = 0.6, min = 6, max = 35 },
 	["Toaster-Gecko"] = { id = "", volume = 0.6, min = 6, max = 35 },
 	["Pudding-Golem"] = { id = "", volume = 0.7, min = 6, max = 40 },
+	["Donut-Drache"] = { id = "", volume = 0.7, min = 8, max = 50 },
 }
 
 -- Map-Masse in Studs. Die Halle ist ein Quadrat um den Ursprung,
 -- die Lueftung laeuft als Ringkorridor aussen herum.
 Config.Map = {
-	HallHalf = 60,
+	HallHalf = 80,
 	WallThickness = 2,
 	HallWallHeight = 16,
 	VentWidth = 8,
 	VentHeight = 8,
 	DoorWidth = 8,
-	BaseDistance = 46,
+	BaseDistance = 64,
 	BaseColors = {
 		{ 255, 176, 59 },
 		{ 86, 180, 233 },

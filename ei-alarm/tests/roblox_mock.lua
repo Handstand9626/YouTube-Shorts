@@ -11,7 +11,7 @@
 -- Plain Lua 5.1. Usage: local Mock = dofile("roblox_mock.lua")(sourceRoot)
 
 return function(sourceRoot)
-	local Mock = { now = 0, prints = {}, kicked = {}, sent = {}, raycastHit = nil }
+	local Mock = { now = 0, prints = {}, kicked = {}, sent = {}, effects = {}, broadcast = {}, raycastHit = nil }
 	local unpack = unpack or table.unpack
 
 	-- Scheduler ------------------------------------------------------------
@@ -79,6 +79,9 @@ return function(sourceRoot)
 	Vector3.__index = function(self, key)
 		if key == "Magnitude" then
 			return math.sqrt(self.X * self.X + self.Y * self.Y + self.Z * self.Z)
+		elseif key == "Unit" then
+			local length = math.sqrt(self.X * self.X + self.Y * self.Y + self.Z * self.Z)
+			return Vector3.new(self.X / length, self.Y / length, self.Z / length)
 		end
 		return Vector3[key]
 	end
@@ -96,6 +99,12 @@ return function(sourceRoot)
 			a, b = b, a
 		end
 		return Vector3.new(a.X * b, a.Y * b, a.Z * b)
+	end
+	Vector3.__unm = function(a)
+		return Vector3.new(-a.X, -a.Y, -a.Z)
+	end
+	function Vector3:Cross(b)
+		return Vector3.new(self.Y * b.Z - self.Z * b.Y, self.Z * b.X - self.X * b.Z, self.X * b.Y - self.Y * b.X)
 	end
 	Vector3.__eq = function(a, b)
 		return a.X == b.X and a.Y == b.Y and a.Z == b.Z
@@ -167,6 +176,16 @@ return function(sourceRoot)
 		end
 		return true
 	end
+	function CFrame.lookAt(at, target)
+		local look = (target - at).Unit
+		local up = Vector3.new(0, 1, 0)
+		if math.abs(look.Y) > 0.999 then
+			up = Vector3.new(0, 0, 1)
+		end
+		local right = look:Cross(up).Unit
+		local top = right:Cross(look)
+		return cframe(at.X, at.Y, at.Z, { right.X, top.X, -look.X, right.Y, top.Y, -look.Y, right.Z, top.Z, -look.Z })
+	end
 	function CFrame:Inverse()
 		local r = self.r
 		local t = { r[1], r[4], r[7], r[2], r[5], r[8], r[3], r[6], r[9] }
@@ -188,17 +207,18 @@ return function(sourceRoot)
 	-- Enums ----------------------------------------------------------------
 
 	local ENUMS = {
-		Material = { "SmoothPlastic", "Metal", "Neon", "Glass" },
+		Material = { "SmoothPlastic", "Metal", "Neon", "Glass", "Ice", "Grass", "DiamondPlate", "Wood" },
 		SurfaceType = { "Smooth" },
 		PartType = { "Ball", "Block", "Cylinder" },
 		RollOffMode = { "InverseTapered" },
 		NormalId = { "Front" },
-		Font = { "GothamBold" },
+		Font = { "GothamBold", "GothamBlack" },
 		MeshType = { "Sphere" },
 		HighlightDepthMode = { "Occluded" },
 		RaycastFilterType = { "Include" },
-		EasingStyle = { "Sine" },
-		EasingDirection = { "InOut" },
+		EasingStyle = { "Sine", "Quad", "Back" },
+		EasingDirection = { "InOut", "Out" },
+		BulkMoveMode = { "FireCFrameChanged" },
 	}
 	local Enum = setmetatable({}, {
 		__index = function(_, enumName)
@@ -220,7 +240,8 @@ return function(sourceRoot)
 	-- Instances ------------------------------------------------------------
 
 	local BASE_PART = "Size CFrame Position Color Material Anchored CanCollide Massless Transparency "
-		.. "TopSurface BottomSurface Shape AssemblyLinearVelocity AssemblyAngularVelocity"
+		.. "TopSurface BottomSurface Shape AssemblyLinearVelocity AssemblyAngularVelocity "
+		.. "CanTouch CanQuery CastShadow Reflectance"
 	local PROPERTIES = {
 		Part = BASE_PART,
 		SpawnLocation = BASE_PART .. " Neutral Duration",
@@ -230,13 +251,16 @@ return function(sourceRoot)
 		Sound = "SoundId Volume Looped RollOffMode RollOffMinDistance RollOffMaxDistance",
 		PointLight = "Range Brightness Shadows Color Enabled",
 		SurfaceGui = "Face",
-		BillboardGui = "Size StudsOffset MaxDistance AlwaysOnTop",
+		BillboardGui = "Size StudsOffset MaxDistance AlwaysOnTop LightInfluence",
 		ScreenGui = "ResetOnSpawn",
 		TextLabel = "Size Position AnchorPoint BackgroundTransparency BackgroundColor3 TextScaled Font "
-			.. "TextColor3 TextStrokeTransparency Text Visible",
+			.. "TextColor3 TextStrokeTransparency Text Visible TextTransparency TextStrokeColor3 Rotation",
+		Frame = "Size Position AnchorPoint BackgroundTransparency BackgroundColor3 Visible BorderSizePixel",
+		UIScale = "Scale",
+		Camera = "FieldOfView CFrame",
 		SpecialMesh = "MeshType",
 		Highlight = "FillColor OutlineColor FillTransparency DepthMode Enabled",
-		ParticleEmitter = "Rate Lifetime Speed SpreadAngle Color Size",
+		ParticleEmitter = "Rate Lifetime Speed SpreadAngle Color Size LightEmission Acceleration",
 		Weld = "Part0 Part1 C0 C1",
 		RemoteEvent = "",
 		IntValue = "Value",
@@ -248,15 +272,15 @@ return function(sourceRoot)
 		Script = "",
 		LocalScript = "",
 		PlayerGui = "",
-		Service = "LocalPlayer ClockTime Brightness Ambient OutdoorAmbient",
-		Atmosphere = "Density Offset Haze Color",
+		Service = "LocalPlayer ClockTime Brightness Ambient OutdoorAmbient CurrentCamera",
+		Atmosphere = "Density Offset Haze Glare Color",
 		BloomEffect = "Intensity Size Threshold",
-		ColorCorrectionEffect = "Saturation Contrast",
+		ColorCorrectionEffect = "Saturation Contrast Brightness",
 	}
 	local SIGNALS = {
 		Triggered = true, Died = true, CharacterAdded = true, CharacterRemoving = true,
 		PlayerAdded = true, PlayerRemoving = true, Heartbeat = true, RenderStepped = true,
-		OnClientEvent = true,
+		OnClientEvent = true, ChildAdded = true,
 	}
 	local NILABLE = {
 		Parent = true, Character = true, PrimaryPart = true, RespawnLocation = true,
@@ -344,6 +368,10 @@ return function(sourceRoot)
 			props.Parent = value
 			if value then
 				table.insert(rawget(value, "_children"), self)
+				local added = rawget(value, "_signals").ChildAdded
+				if added then
+					added:Fire(self)
+				end
 			end
 		elseif key == "Position" and isPart(self) then
 			local current = props.CFrame
@@ -378,6 +406,9 @@ return function(sourceRoot)
 			props.Value = 0
 		elseif className == "Sound" then
 			props.Playing = false
+		elseif className == "Camera" then
+			props.CFrame = CFrame.new(0, 40, 0)
+			props.FieldOfView = 70
 		end
 		if parent then
 			instance.Parent = parent
@@ -454,11 +485,22 @@ return function(sourceRoot)
 	function methods:Emit(count)
 		self._props.Emitted = (self._props.Emitted or 0) + count
 	end
+	-- Notify-Meldungen landen in Mock.sent, alles andere in Mock.effects.
 	function methods:FireClient(player, ...)
-		local list = Mock.sent[player.UserId] or {}
-		Mock.sent[player.UserId] = list
+		local store = Mock.sent
+		if self.Name ~= "Notify" then
+			store = Mock.effects
+		end
+		local list = store[player.UserId] or {}
+		store[player.UserId] = list
 		list[#list + 1] = { ... }
 		if Mock.localPlayer == player then
+			self.OnClientEvent:Fire(...)
+		end
+	end
+	function methods:FireAllClients(...)
+		Mock.broadcast[#Mock.broadcast + 1] = { ... }
+		if Mock.localPlayer then
 			self.OnClientEvent:Fire(...)
 		end
 	end
@@ -512,6 +554,12 @@ return function(sourceRoot)
 	rawset(services.Workspace, "Raycast", function()
 		return Mock.raycastHit
 	end)
+	rawset(services.Workspace, "BulkMoveTo", function(_, parts, cframes)
+		for index, part in ipairs(parts) do
+			part.CFrame = cframes[index]
+		end
+	end)
+	rawget(services.Workspace, "_props").CurrentCamera = Instance.new("Camera")
 
 	local game = {}
 	function game:GetService(name)
@@ -682,6 +730,7 @@ return function(sourceRoot)
 		end
 	end
 
+	Mock.require = globals.require
 	Mock.services = services
 	Mock.Vector3 = Vector3
 	Mock.CFrame = CFrame

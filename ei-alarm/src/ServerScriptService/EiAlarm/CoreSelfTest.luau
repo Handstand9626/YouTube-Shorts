@@ -204,9 +204,36 @@ tests["Schlupf: Kreatur ist sicher und verdient Muenzen"] = function(EggCore, Co
 	expect(not core:finishHatch(starterA, 0), "kein doppelter Schlupf")
 	core:payout()
 	core:payout()
-	expect(core.players[A].coins == 2 * Config.Creatures[1].coinsPerSecond, "A verdient Muenzen")
-	expect(core.players[B].coins == 0, "B hat noch keine Kreatur")
-	expect(core:pickCreature(0.999).id == Config.Creatures[#Config.Creatures].id, "hoher Wurf ergibt die seltenste Kreatur")
+	local income = 2 * Config.Creatures[1].coinsPerSecond
+	expect(core.players[A].coins == 0, "Muenzen liegen erst im Einsammelfeld")
+	expect(core.bases[baseA].pending == income, "Einsammelfeld fuellt sich")
+	expect(core:collect(B) == 0 and core.players[B].coins == 0, "B hat noch keine Kreatur")
+	expect(core:collect(A) == income and core.players[A].coins == income, "A sammelt ein")
+	expect(core:collect(A) == 0 and core.bases[baseA].pending == 0, "Feld ist danach leer")
+end
+
+tests["Ei-Typen: Seltenheit bestimmt, was schluepfen kann"] = function(EggCore, Config)
+	local core = EggCore.new(Config)
+	local first, last = Config.EggTypes[1], Config.EggTypes[#Config.EggTypes]
+	expect(core:pickEggType(0).id == first.id, "Wurf 0 ergibt den haeufigsten Typ")
+	expect(core:pickEggType(0.9999).id == last.id, "hoechster Wurf ergibt den seltensten Typ")
+	expect(core:pickCreature(0, first.id).id == first.creatures[1][1], "Wurf 0 ergibt die erste Kreatur des Typs")
+	expect(core:pickCreature(0.9999, last.id).id == last.creatures[#last.creatures][1], "hoher Wurf im seltensten Ei")
+	local allowed = {}
+	for _, entry in ipairs(first.creatures) do
+		allowed[entry[1]] = true
+	end
+	for step = 0, 99 do
+		expect(allowed[core:pickCreature(step / 100, first.id).id], "nur Kreaturen aus der Liste des Typs")
+	end
+	core:addPlayer(A)
+	local egg = core:spawnCenterEgg(1, last.id, 0)
+	expect(core.eggs[egg].type == last.id and core.eggs[egg].remaining == last.incubation, "Typ und Brutzeit gesetzt")
+	expect(core:take(A, egg, 1) and core:place(A, 1, 1, 2), "A setzt das seltene Ei ein")
+	core:tick(last.incubation)
+	expect(core:beginHatch(egg), "Schlupf beginnt")
+	local done, creatureId = core:finishHatch(egg, 0.9999)
+	expect(done and creatureId == last.creatures[#last.creatures][1], "seltenes Ei, seltene Kreatur")
 end
 
 tests["Fuenfter Spieler bekommt keine Basis"] = function(EggCore, Config)
@@ -219,16 +246,33 @@ tests["Fuenfter Spieler bekommt keine Basis"] = function(EggCore, Config)
 	expect(core:addPlayer(999) == 2, "frei gewordene Basis wird neu vergeben")
 end
 
-tests["Mitte fuellt sich nach der Wartezeit wieder auf"] = function(EggCore, Config)
+tests["Mitte: alle paar Sekunden ein neues Ei, liegen gebliebene verschwinden"] = function(EggCore, Config)
 	local core = EggCore.new(Config)
 	core:addPlayer(A)
-	expect(#core:fillCenter(0) == Config.CenterPedestals, "alle Sockel gefuellt")
+	local interval = Config.CenterSpawnInterval
+	expect(#core:fillCenter(0, 0) == 1, "erstes Ei erscheint sofort")
+	expect(#core:fillCenter(interval - 0.5, 0) == 0, "Wartezeit laeuft")
+	expect(#core:fillCenter(interval, 0.9999) == 1, "zweites Ei nach der Wartezeit")
+	expect(core.eggs[core.center[2]].type == Config.EggTypes[#Config.EggTypes].id, "Wurf bestimmt den Typ")
+	for index = 2, Config.CenterPedestals + 2 do
+		core:fillCenter(index * interval, 0)
+	end
+	local count = 0
+	for _ in pairs(core.center) do
+		count = count + 1
+	end
+	expect(count == Config.CenterPedestals, "nie mehr Eier als Sockel")
+
+	-- Alle Eier liegen seit spaetestens Sekunde 30. A nimmt eins kurz vor Ablauf.
 	local egg = core.center[1]
-	expect(core:take(A, egg, 1), "A nimmt Ei")
-	expect(#core:fillCenter(50) == 0, "Sockel bleibt reserviert, solange das Ei unterwegs ist")
-	expect(core:place(A, 1, 1, 60), "A setzt Ei ein")
-	expect(#core:fillCenter(60 + Config.CenterRespawn - 1) == 0, "Wartezeit laeuft")
-	expect(#core:fillCenter(60 + Config.CenterRespawn) == 1, "neues Ei erscheint")
+	local late = 30 + Config.CenterEggLifetime
+	expect(core:take(A, egg, late - 1), "A nimmt Ei")
+	core:expire(late + 1)
+	expect(core.eggs[egg] ~= nil and core.eggs[egg].state == "Carried", "getragenes Ei verschwindet nicht durch die Liegezeit")
+	expect(core.center[2] == nil, "liegen gebliebene Eier sind weg")
+	expect(core.center[1] == egg, "Sockel bleibt reserviert, solange das Ei unterwegs ist")
+	expect(core:place(A, 1, 1, late + 2), "A setzt Ei ein")
+	expect(core.center[1] == nil, "Sockel ist wieder frei")
 end
 
 -- Fuehrt alle Tests aus. Rueckgabe: Anzahl bestanden, Anzahl fehlgeschlagen, Liste der Fehler.

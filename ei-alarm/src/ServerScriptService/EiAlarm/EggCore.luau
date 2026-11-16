@@ -25,21 +25,31 @@ function EggCore.new(config)
 	self.eggs = {} -- [eggId] = egg
 	self.nextEggId = 1
 	self.players = {} -- [userId] = { base, coins, carrying, stunnedUntil }
-	self.bases = {} -- [baseId] = { owner, slots = { [slot] = eggId }, creatures, reserved }
+	self.bases = {} -- [baseId] = { owner, slots = { [slot] = eggId }, creatures, reserved, pending }
 	self.center = {} -- [pedestal] = eggId
-	self.centerEmptySince = {} -- [pedestal] = Zeitpunkt, seit dem der Sockel leer ist
+	self.lastCenterSpawn = nil -- Zeitpunkt des letzten neuen Eis in der Mitte
+	self.eggTypes = {} -- [typeId] = Eintrag aus config.EggTypes
+	self.creatureInfo = {} -- [creatureId] = Eintrag aus config.Creatures
+	for _, eggType in ipairs(config.EggTypes) do
+		self.eggTypes[eggType.id] = eggType
+	end
+	for _, creature in ipairs(config.Creatures) do
+		self.creatureInfo[creature.id] = creature
+	end
 	self.dirty = {} -- [eggId] = true: Darstellung muss aktualisiert werden
 	for baseId = 1, config.MaxBases do
-		self.bases[baseId] = { owner = nil, slots = {}, creatures = {}, reserved = 0 }
+		self.bases[baseId] = { owner = nil, slots = {}, creatures = {}, reserved = 0, pending = 0 }
 	end
 	return self
 end
 
 -- Intern -------------------------------------------------------------------
 
-function EggCore:_newEgg(remaining)
+function EggCore:_newEgg(typeId, remaining)
 	local egg = {
 		id = self.nextEggId,
+		type = typeId,
+		centerDeadline = nil,
 		state = "Center",
 		home = nil,
 		owner = nil, -- Besitzer der Brutstation; waehrend eines Diebstahls das Opfer
@@ -78,7 +88,6 @@ function EggCore:_releaseHome(egg, now)
 	if home.kind == "Center" then
 		if self.center[home.slot] == egg.id then
 			self.center[home.slot] = nil
-			self.centerEmptySince[home.slot] = now or 0
 		end
 	else
 		local base = self.bases[home.base]
@@ -146,7 +155,7 @@ function EggCore:spawnStarterEgg(userId)
 	if base.slots[1] then
 		return nil
 	end
-	local egg = self:_newEgg(self.config.StarterIncubation)
+	local egg = self:_newEgg(self.config.StarterEggType, self.config.StarterIncubation)
 	egg.state = "Incubating"
 	egg.owner = userId
 	egg.protected = true
@@ -184,31 +193,55 @@ function EggCore:removePlayer(userId, now)
 	base.slots = {}
 	base.creatures = {}
 	base.reserved = 0
+	base.pending = 0
 	self.players[userId] = nil
 	return true
 end
 
 -- Zentrale Eierstation --------------------------------------------------------
 
-function EggCore:spawnCenterEgg(pedestal)
+-- typeId: Eintrag aus config.EggTypes, Standard ist der erste Typ.
+function EggCore:spawnCenterEgg(pedestal, typeId, now)
 	if self.center[pedestal] then
 		return nil
 	end
-	local egg = self:_newEgg(self.config.Incubation)
+	local eggType = self.eggTypes[typeId] or self.config.EggTypes[1]
+	local egg = self:_newEgg(eggType.id, eggType.incubation)
 	egg.home = { kind = "Center", slot = pedestal }
+	egg.centerDeadline = (now or 0) + self.config.CenterEggLifetime
 	self.center[pedestal] = egg.id
 	return egg.id
 end
 
--- Fuellt Sockel auf, die lange genug leer waren.
-function EggCore:fillCenter(now)
+-- roll: Zufallszahl in [0, 1). Seltene Typen haben ein kleines Gewicht.
+function EggCore:pickEggType(roll)
+	local total = 0
+	for _, eggType in ipairs(self.config.EggTypes) do
+		total = total + eggType.weight
+	end
+	local target = roll * total
+	local sum = 0
+	for _, eggType in ipairs(self.config.EggTypes) do
+		sum = sum + eggType.weight
+		if target < sum then
+			return eggType
+		end
+	end
+	return self.config.EggTypes[#self.config.EggTypes]
+end
+
+-- Legt alle CenterSpawnInterval Sekunden ein neues Ei auf einen freien Sockel.
+-- Rueckgabe: Liste der neuen Ei-IDs (leer oder ein Eintrag).
+function EggCore:fillCenter(now, roll)
 	local spawned = {}
+	if self.lastCenterSpawn ~= nil and now - self.lastCenterSpawn < self.config.CenterSpawnInterval then
+		return spawned
+	end
 	for pedestal = 1, self.config.CenterPedestals do
 		if not self.center[pedestal] then
-			local since = self.centerEmptySince[pedestal]
-			if since == nil or now - since >= self.config.CenterRespawn then
-				spawned[#spawned + 1] = self:spawnCenterEgg(pedestal)
-			end
+			self.lastCenterSpawn = now
+			spawned[1] = self:spawnCenterEgg(pedestal, self:pickEggType(roll or 0).id, now)
+			break
 		end
 	end
 	return spawned
@@ -357,6 +390,7 @@ function EggCore:returnHome(eggId, now)
 	end
 	if egg.home.kind == "Center" then
 		egg.state = "Center"
+		egg.centerDeadline = (now or 0) + self.config.CenterEggLifetime
 	else
 		egg.state = "Incubating"
 	end
@@ -372,9 +406,19 @@ end
 -- Zeitabhaengiges -------------------------------------------------------------
 
 -- Holt Eier zurueck, die zu lange unterwegs sind oder zu lange am Boden liegen.
--- Rueckgabe: Liste { eggId, carrier } der betroffenen Eier.
+-- Eier, die zu lange unberuehrt in der Mitte liegen, verschwinden.
+-- Rueckgabe: Liste { eggId, carrier } der zurueckgeholten Eier.
 function EggCore:expire(now)
 	local expired = {}
+	local stale = {}
+	for _, egg in pairs(self.eggs) do
+		if egg.state == "Center" and egg.centerDeadline ~= nil and now >= egg.centerDeadline then
+			stale[#stale + 1] = egg
+		end
+	end
+	for _, egg in ipairs(stale) do
+		self:_remove(egg, now)
+	end
 	for id, egg in pairs(self.eggs) do
 		local inTransit = egg.state == "Carried" or egg.state == "Dropped"
 		local late = inTransit and egg.transitDeadline ~= nil and now >= egg.transitDeadline
@@ -426,20 +470,24 @@ function EggCore:beginHatch(eggId)
 end
 
 -- roll: Zufallszahl in [0, 1). Der Server wuerfelt, nie der Client.
-function EggCore:pickCreature(roll)
+-- Die Chancen haengen vom Ei-Typ ab. Rueckgabe: Eintrag aus config.Creatures.
+function EggCore:pickCreature(roll, typeId)
+	local eggType = self.eggTypes[typeId] or self.config.EggTypes[1]
 	local total = 0
-	for _, creature in ipairs(self.config.Creatures) do
-		total = total + creature.weight
+	for _, entry in ipairs(eggType.creatures) do
+		total = total + entry[2]
 	end
 	local target = roll * total
 	local sum = 0
-	for _, creature in ipairs(self.config.Creatures) do
-		sum = sum + creature.weight
+	local chosen = eggType.creatures[#eggType.creatures][1]
+	for _, entry in ipairs(eggType.creatures) do
+		sum = sum + entry[2]
 		if target < sum then
-			return creature
+			chosen = entry[1]
+			break
 		end
 	end
-	return self.config.Creatures[#self.config.Creatures]
+	return self.creatureInfo[chosen]
 end
 
 -- Schliesst den Schlupf ab: Ei weg, Slot frei, Kreatur gehoert sicher dem Besitzer.
@@ -452,7 +500,7 @@ function EggCore:finishHatch(eggId, roll)
 	local baseId = egg.home.base
 	local base = self.bases[baseId]
 	local owner = egg.owner
-	local creature = self:pickCreature(roll)
+	local creature = self:pickCreature(roll, egg.type)
 	base.reserved = math.max(0, base.reserved - 1)
 	base.creatures[#base.creatures + 1] = { id = creature.id, coinsPerSecond = creature.coinsPerSecond }
 	self:_remove(egg)
@@ -467,14 +515,27 @@ function EggCore:incomeOf(baseId)
 	return income
 end
 
--- Einmal pro Sekunde aufrufen: jede Kreatur zahlt an den Besitzer ihrer Basis.
+-- Einmal pro Sekunde aufrufen: jede Kreatur zahlt in das Einsammelfeld ihrer Basis.
 function EggCore:payout()
 	for baseId, base in pairs(self.bases) do
-		local player = base.owner and self.players[base.owner]
-		if player then
-			player.coins = player.coins + self:incomeOf(baseId)
+		if base.owner then
+			base.pending = base.pending + self:incomeOf(baseId)
 		end
 	end
+end
+
+-- Der Besitzer betritt sein Einsammelfeld: angesammelte Muenzen gutschreiben.
+-- Rueckgabe: eingesammelter Betrag (0, wenn nichts da ist).
+function EggCore:collect(userId)
+	local player = self.players[userId]
+	if not player then
+		return 0
+	end
+	local base = self.bases[player.base]
+	local amount = base.pending
+	base.pending = 0
+	player.coins = player.coins + amount
+	return amount
 end
 
 return EggCore

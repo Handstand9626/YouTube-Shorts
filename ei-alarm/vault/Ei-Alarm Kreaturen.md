@@ -3,15 +3,25 @@ created: 2026-11-14
 project: "[[Ei-Alarm!]]"
 ---
 
-Die drei Kreaturen des ersten Builds. Jede soll schon als Silhouette erkennbar sein und eine Bewegung haben, die es bei keiner anderen gibt.
+Die vier Kreaturen des Builds. Jede soll schon als Silhouette erkennbar sein und eine Bewegung haben, die es bei keiner anderen gibt.
 
-| Kreatur | Chance | Münzen pro Sekunde | Bewegung | Laut |
+| Kreatur | Seltenheit | Münzen pro Sekunde | Bewegung | Laut |
 | --- | --- | --- | --- | --- |
-| Waffelkrabbe | 60 % | 2 | hüpft seitwärts | zwei hölzerne Klacker |
-| Toaster-Gecko | 30 % | 5 | spuckt beim Erschrecken Toast aus | Toaster-„Ka-tschick“ mit kurzem Quieken |
-| Pudding-Golem | 10 % | 12 | wackelt bei jedem Schritt | tiefes, wabbelndes „Blubb“ |
+| Waffelkrabbe | Gewöhnlich | 2 | hüpft seitwärts | zwei hölzerne Klacker |
+| Toaster-Gecko | Selten | 6 | spuckt beim Erschrecken Toast aus | Toaster-„Ka-tschick“ mit kurzem Quieken |
+| Pudding-Golem | Episch | 15 | stapft, die obere Stufe schwappt nach | tiefes, wabbelndes „Blubb“ |
+| Donut-Drache | Legendär | 50 | schwebt, schlägt mit Zuckerguss-Flügeln | helles Fauchen mit Glöckchen |
 
-Die Werte stehen in `Config.Creatures`. Gewürfelt wird auf dem Server.
+Die Werte stehen in `Config.Creatures`. Welche Kreatur schlüpft, hängt vom Ei-Typ ab (`Config.EggTypes`). Gewürfelt wird auf dem Server.
+
+## Ei-Typen
+
+| Ei | Seltenheit | Chance in der Mitte | Brutzeit | Aussehen |
+| --- | --- | --- | --- | --- |
+| Labor-Ei | Gewöhnlich | 70 % | 30 s | cremeweiß, braune Flecken, jedes Muster anders |
+| Kühlfach-Ei | Selten | 22 % | 40 s | eisblau, Schneehaube, Eiskristalle |
+| Tresor-Ei | Episch | 7 % | 55 s | dunkles Metall, Goldbänder, Zahlenschloss, Lichtsäule |
+| Kometen-Ei | Legendär | 1 % | 75 s | violett, Sterne, schräger Goldring, Funkeln, Lichtsäule |
 
 ## Waffelkrabbe
 
@@ -37,6 +47,15 @@ Die Werte stehen in `Config.Creatures`. Gewürfelt wird auf dem Server.
 - Augen: zwei kleine schwarze Kugeln, weit oben und eng beieinander. Das wirkt gutmütig und etwas langsam.
 - Farben: Pudding `#FAD678`, Karamell `#8C4B1E`.
 - Charakter: schwer und gemütlich. Jeder Schritt lässt die oberen Stufen nachschwingen.
+
+## Donut-Drache
+
+- Körper: Hefeteig-Ellipsoid mit cremefarbenem Bauch, rosa Glasur auf dem Rücken, bunte Streusel.
+- Kopf: auf schrägem Hals, kurze Schnauze, zwei cremefarbene Hörner.
+- Flügel: halbtransparente Zuckerguss-Membranen mit Teig-Knochen.
+- Schwanz: endet in einem Mini-Donut.
+- Farben: Teig `#D69650`, Glasur `#FF88BA`, Creme `#FADEA6`.
+- Charakter: stolz und verspielt. Schwebt immer etwas über dem Boden.
 
 ## Platzhalter im ersten Build
 
