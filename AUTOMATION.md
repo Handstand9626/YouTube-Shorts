@@ -67,8 +67,14 @@ cut off, overlaps, or an emoji is missing (shows a box).
 ## 5. Publish
 1. Commit the story JSON (NOT the mp4) to `main` and push.
 2. `./publish_video.sh videos/<file>.mp4` → prints the public URL.
-3. Metricool `createScheduledPost`: blogId 7978983, provider youtube, date = your slot today
-   (Europe/Berlin), media [URL], firstCommentText = story `comment`, text = description,
+3. Metricool: first call `getBrandSettings` and use the brand whose networksData has YouTube
+   (and TikTok if connected). Then `createScheduledPost` ONCE for both networks:
+   providers [{"network":"youtube"}] plus {"network":"tiktok"} if TikTok is connected,
+   date = your slot today (Europe/Berlin), media [URL], firstCommentText = story `comment`,
+   text = description,
    youtubeData {title, type "short", privacy "public", tags, category "EDUCATION",
-   madeForKids false, isAiGeneratedContent false}.
+   madeForKids false, isAiGeneratedContent false},
+   tiktokData {title = YouTube title without " #shorts", privacyOption "PUBLIC_TO_EVERYONE",
+   isAigc true, autoAddMusic false}.
    If the slot time has already passed, schedule 15 minutes from now.
+   If no YouTube network is connected in Metricool, stop and report that.
