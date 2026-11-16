@@ -1,0 +1,4 @@
+# Laufzeitdaten des Tests (Datenbank, Berichte, Archiv) gehoeren nicht ins Repository
+data/
+__pycache__/
+*.pyc
