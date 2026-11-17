@@ -1,0 +1,70 @@
+{
+  "title": "This Shark Can Live For Almost 400 Years 🦈⏳ #shorts",
+  "description": "In 2016, scientists radiocarbon-dated the eye lenses of 28 Greenland sharks. The largest, about 5 metres long, was estimated at 392 years old (with a big margin of error) – and even the low estimate of 272 years makes it the longest-living vertebrate known. These sharks grow only about 1 cm per year, cruise at roughly 1 km/h, and females may not mature until around 150 years old.\n\nSources: Nielsen et al., Science (2016), NOAA Ocean Service, University of Oxford, PBS NOVA, Scientific American\n\n#shorts #facts #crazyfacts #animals #sharks #ocean #didyouknow",
+  "tags": ["facts", "crazy facts", "animals", "greenland shark", "shark", "ocean", "longest living animal", "science", "did you know", "shorts"],
+  "comment": "How old do you think the oldest Greenland shark alive today is? 🦈👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "There is a shark that can live for almost four hundred years.",
+      "anim": "title",
+      "headline": "THIS SHARK\nLIVES 400\nYEARS",
+      "emoji": ["🦈", "⏳"]
+    },
+    {
+      "text": "It's the Greenland shark. It lives in the icy, dark waters of the Arctic and the North Atlantic.",
+      "anim": "zoom",
+      "emoji": ["🦈", "🧊"],
+      "orbit": "❄️"
+    },
+    {
+      "text": "In twenty sixteen, scientists dated the eye lenses of twenty eight of these sharks. The biggest one, about five meters long, was estimated at three hundred ninety two years old.",
+      "anim": "stat",
+      "to": 392,
+      "suffix": " yrs",
+      "label": "ESTIMATED AGE",
+      "emoji": ["🔬", "🦈"]
+    },
+    {
+      "text": "Even the lowest estimate was two hundred seventy two years. So this shark was born before the United States existed.",
+      "anim": "timeline",
+      "points": [
+        {"year": "1700s", "label": "Shark born", "emoji": "🦈"},
+        {"year": "1776", "label": "USA founded", "emoji": "📜"},
+        {"year": "2016", "label": "Age revealed", "emoji": "🔬"}
+      ],
+      "gap": "272+ years"
+    },
+    {
+      "text": "The secret? Freezing water and a super slow life. It grows only about one centimeter per year.",
+      "anim": "stat",
+      "to": 1,
+      "suffix": " cm",
+      "label": "GROWTH PER YEAR",
+      "emoji": ["📏", "🐢"]
+    },
+    {
+      "text": "It usually cruises at around one kilometer per hour.",
+      "anim": "run",
+      "emoji": ["🦈"],
+      "trail": "💧"
+    },
+    {
+      "text": "That's way slower than you walk.",
+      "anim": "versus",
+      "sides": [
+        {"emoji": "🚶", "label": "YOU", "value": "5 km/h"},
+        {"emoji": "🦈", "label": "SHARK", "value": "1 km/h"}
+      ]
+    },
+    {
+      "text": "And the craziest part? Females may not have babies until they are about one hundred fifty years old.",
+      "anim": "shake",
+      "emoji": ["🎂", "😱"]
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
