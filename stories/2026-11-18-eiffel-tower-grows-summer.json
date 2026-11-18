@@ -1,0 +1,63 @@
+{
+  "title": "The Eiffel Tower Gets Taller Every Summer 🗼☀️ #shorts",
+  "description": "The Eiffel Tower is built from about 7,300 tonnes of iron, and iron expands in the heat. Between a freezing winter day and a hot summer day, its height can change by up to about 12–15 cm – and because the sun heats one side more, the tower even leans slightly away from the sun. It's held together by 2.5 million rivets and gets repainted about every 7 years with around 60 tonnes of paint.\n\nSources: Official Eiffel Tower website (toureiffel.paris), The Conversation (Prof. Federico de Isidro Gordejuela), Interesting Engineering, Google Arts & Culture\n\n#shorts #facts #crazyfacts #science #physics #eiffeltower #paris #didyouknow",
+  "tags": ["facts", "crazy facts", "science", "physics", "eiffel tower", "paris", "thermal expansion", "engineering", "did you know", "shorts"],
+  "comment": "Did you know metal could make a whole tower grow? What other building should we cover next? 🗼👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "The Eiffel Tower gets taller every summer.",
+      "anim": "title",
+      "headline": "EIFFEL TOWER\nGROWS IN\nSUMMER",
+      "emoji": ["🗼", "☀️"]
+    },
+    {
+      "text": "The tower is made of about seven thousand three hundred tonnes of iron. And iron expands when it heats up.",
+      "anim": "stat",
+      "to": 7300,
+      "suffix": " t",
+      "label": "TONNES OF IRON",
+      "emoji": ["🗼", "🔥"]
+    },
+    {
+      "text": "That iron comes in eighteen thousand separate parts, held together by two and a half million rivets.",
+      "anim": "count",
+      "to": 18038,
+      "label": "IRON PARTS",
+      "emoji": ["🔩"],
+      "under": "🗼"
+    },
+    {
+      "text": "Compare a freezing winter day with the hottest summer day, and its height can change by up to about fifteen centimeters.",
+      "anim": "versus",
+      "sides": [
+        {"emoji": "🥶", "label": "WINTER", "value": "Shorter"},
+        {"emoji": "🥵", "label": "SUMMER", "value": "+15 cm"}
+      ]
+    },
+    {
+      "text": "That's roughly the length of a pen. Then in winter, it shrinks right back down.",
+      "anim": "stat",
+      "to": 15,
+      "suffix": " cm",
+      "label": "TALLER IN SUMMER",
+      "emoji": ["📏", "☀️"]
+    },
+    {
+      "text": "But here's the twist. The sun hits one side harder, so that side grows more. And the whole tower leans slightly away from the sun.",
+      "anim": "zoom",
+      "emoji": ["🗼", "😵"],
+      "orbit": "☀️"
+    },
+    {
+      "text": "To keep all that iron from rusting, it gets repainted about every seven years, with around sixty tonnes of paint.",
+      "anim": "rain",
+      "emoji": ["🎨", "🗼"],
+      "drop": "💧"
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
