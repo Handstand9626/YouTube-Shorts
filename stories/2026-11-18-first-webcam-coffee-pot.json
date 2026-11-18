@@ -1,0 +1,118 @@
+{
+  "title": "The First Webcam Was Built to Watch a Coffee Pot ☕📷 #shorts",
+  "description": "In 1991, computer scientists at the University of Cambridge pointed a camera at the coffee pot outside the lab's Trojan Room, so they could check from their desks whether it was empty. The tiny 128×128 greyscale picture updated about three times a minute, and in 1993 it went onto the World Wide Web, becoming the first famous webcam. It was switched off on 22 August 2001, and the coffee machine was sold on eBay for £3,350 to Spiegel Online – today it is in the Heinz Nixdorf MuseumsForum in Paderborn, Germany.\n\nSources: University of Cambridge Computer Laboratory (Quentin Stafford-Fraser's timeline), Wikipedia, Guinness World Records, PetaPixel, ITWorld Canada, Raspberry Pi Foundation\n\n#shorts #facts #crazyfacts #inventions #technology #internet #coffee #didyouknow",
+  "tags": [
+    "facts",
+    "crazy facts",
+    "inventions",
+    "technology",
+    "internet history",
+    "first webcam",
+    "coffee",
+    "cambridge",
+    "did you know",
+    "shorts"
+  ],
+  "comment": "Would you watch a live stream of a coffee pot? What should the next webcam have watched? ☕👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "The first famous webcam was built to watch... a coffee pot.",
+      "anim": "title",
+      "headline": "FIRST WEBCAM\nWATCHED A\nCOFFEE POT",
+      "emoji": [
+        "📷",
+        "☕"
+      ]
+    },
+    {
+      "text": "In 1991, scientists at Cambridge University kept walking to the coffee pot, only to find it empty.",
+      "anim": "pop",
+      "emoji": [
+        "🚶",
+        "☕",
+        "😩"
+      ]
+    },
+    {
+      "text": "So they pointed a camera at it, and sent a tiny grey picture, just 128 by 128 pixels, to their screens.",
+      "anim": "stat",
+      "to": 128,
+      "label": "128 x 128, GREY",
+      "emoji": [
+        "📷",
+        "🖥️"
+      ],
+      "suffix": " px"
+    },
+    {
+      "text": "It updated about three times a minute. Full pot? Go now. Empty? Stay at your desk.",
+      "anim": "versus",
+      "sides": [
+        {
+          "emoji": "☕",
+          "label": "FULL",
+          "value": "Go now!"
+        },
+        {
+          "emoji": "❌",
+          "label": "EMPTY",
+          "value": "Stay put"
+        }
+      ]
+    },
+    {
+      "text": "In 1993, they put it on the new World Wide Web, and people around the world watched a coffee pot in England.",
+      "anim": "timeline",
+      "points": [
+        {
+          "year": "1991",
+          "label": "Camera",
+          "emoji": "📷"
+        },
+        {
+          "year": "1993",
+          "label": "On the web",
+          "emoji": "🌐"
+        },
+        {
+          "year": "2001",
+          "label": "Switched off",
+          "emoji": "🔌"
+        }
+      ]
+    },
+    {
+      "text": "In 2001 the camera was switched off, and the coffee machine went up for auction on eBay.",
+      "anim": "run",
+      "emoji": [
+        "☕"
+      ],
+      "trail": "💨"
+    },
+    {
+      "text": "It sold for three thousand three hundred and fifty pounds, to Spiegel Online.",
+      "anim": "stat",
+      "to": 3350,
+      "prefix": "£",
+      "label": "SOLD ON EBAY",
+      "emoji": [
+        "💰",
+        "☕"
+      ]
+    },
+    {
+      "text": "Today it sits in a museum in Germany. All because nobody wanted an empty coffee pot.",
+      "anim": "zoom",
+      "emoji": [
+        "🏛️",
+        "☕"
+      ],
+      "orbit": "✨"
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
