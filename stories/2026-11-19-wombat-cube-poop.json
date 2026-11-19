@@ -1,0 +1,18 @@
+{
+  "title": "This Animal Poops Perfect Cubes 🟫😮 #shorts",
+  "description": "Wombats are the only animals known to make cube-shaped poop. An adult wombat leaves around 80 to 100 little cubes, each about 2 cm wide, every night – and stacks them on rocks and logs to mark its territory, where the flat sides stop them from rolling away. Scientists at Georgia Tech found the corners form inside the intestine, where some parts of the wall are up to four times stiffer than others, and won the 2019 Ig Nobel Prize in Physics for it.\n\nSources: Yang et al., Soft Matter (2021), University of Tasmania, Ig Nobel Prize / Improbable Research, Science Friday, Physics World, Gizmodo, SBS\n\n#shorts #facts #crazyfacts #animals #wombat #science #australia #didyouknow",
+  "tags": ["facts", "crazy facts", "animals", "wombat", "cube poop", "australia", "science", "ig nobel", "did you know", "shorts"],
+  "comment": "Would you rather poop cubes or glow in the dark? Which weird animal should we cover next? 🟫👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "There is an animal that poops perfect little cubes.", "anim": "title", "headline": "THIS ANIMAL\nPOOPS\nCUBES", "emoji": ["😮", "🟫"]},
+    {"text": "It's the wombat, a chubby, furry animal from Australia. And it's the only animal known to do this.", "anim": "pop", "emoji": ["🐻", "🌏", "🟫"]},
+    {"text": "Every single night, one wombat leaves around eighty to one hundred of these cubes.", "anim": "count", "to": 100, "label": "CUBES PER NIGHT", "emoji": ["🟫"], "under": "🌿"},
+    {"text": "Each one is about two centimeters wide. That is roughly the size of a sugar cube!", "anim": "versus", "sides": [{"emoji": "🟫", "label": "WOMBAT", "value": "~2 cm"}, {"emoji": "🧊", "label": "SUGAR CUBE", "value": "~2 cm"}]},
+    {"text": "Why cubes? Wombats stack their poop on rocks and logs to mark their territory. And cubes don't roll away.", "anim": "rain", "emoji": ["🪨", "🪵"], "drop": "🟫"},
+    {"text": "The cubes form inside the gut, where some parts of the wall are up to four times stiffer than others.", "anim": "stat", "to": 4, "suffix": "x", "label": "STIFFER WALLS", "emoji": ["🔬", "🟫"]},
+    {"text": "Scientists studied this so seriously that in 2019, they won the Ig Nobel Prize in Physics.", "anim": "zoom", "emoji": ["🏆", "🟫"], "orbit": "⭐"},
+    {"text": "So next time someone says nature has no straight lines, show them a wombat!", "anim": "shake", "emoji": ["🐻", "🟫"]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
