@@ -1,0 +1,18 @@
+{
+  "title": "This Man Had the Hiccups for 68 Years 😮 #shorts",
+  "description": "Iowa farmer Charles Osborne holds the Guinness World Record for the longest attack of hiccups: from 1922 to 1990, a full 68 years. It started while he was handling a hog, ran at about 20 to 40 hiccups per minute, and added up to an estimated 430 million hiccups. He still married twice and had eight children – and the hiccups stopped on their own about a year before he died in 1991.\n\nSources: Guinness World Records, Smithsonian Magazine, Wikipedia, IFLScience, ScienceAlert\n\n#shorts #facts #crazyfacts #history #worldrecord #hiccups #humanbody #didyouknow",
+  "tags": ["facts", "crazy facts", "hiccups", "world record", "guinness", "charles osborne", "history", "human body", "did you know", "shorts"],
+  "comment": "What's the longest you've ever had the hiccups – and what's your secret cure? 👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "One man had the hiccups for sixty-eight years. Without stopping.", "anim": "title", "headline": "68 YEARS\nOF HICCUPS", "emoji": ["😮", "😵"]},
+    {"text": "His name was Charles Osborne, a farmer from Iowa. In 1922, he was handling a heavy hog when it suddenly started.", "anim": "pop", "emoji": ["👨", "🐷", "🌽"]},
+    {"text": "The hiccups didn't stop until 1990. That's sixty-eight years, a Guinness World Record.", "anim": "timeline", "points": [{"year": "1922", "label": "START", "emoji": "🐷"}, {"year": "1990", "label": "STOP", "emoji": "😌"}], "gap": "68 YEARS"},
+    {"text": "He hiccuped about twenty to forty times every single minute.", "anim": "run", "emoji": ["😵"], "trail": "💨"},
+    {"text": "In total, that's an estimated four hundred and thirty million hiccups!", "anim": "stat", "to": 430, "suffix": " MILLION", "label": "HICCUPS", "emoji": ["😵", "🔢"]},
+    {"text": "And he still lived a normal life. He got married twice and had eight children.", "anim": "count", "to": 8, "label": "CHILDREN", "emoji": ["👶"], "under": "🏠"},
+    {"text": "Doctors never found a cure. Then, about a year before he died, the hiccups just stopped on their own.", "anim": "zoom", "emoji": ["😌", "🩺"], "orbit": "✨"},
+    {"text": "So next time you get the hiccups for five minutes, be thankful!", "anim": "versus", "sides": [{"emoji": "🙂", "label": "YOU", "value": "5 MIN"}, {"emoji": "😵", "label": "CHARLES", "value": "68 YEARS"}]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
