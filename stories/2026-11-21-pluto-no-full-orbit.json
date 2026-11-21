@@ -1,0 +1,17 @@
+{
+  "title": "Pluto Hasn't Finished ONE Orbit Since We Found It 🤯 #shorts",
+  "description": "Pluto was discovered on February 18, 1930 by 24-year-old Clyde Tombaugh at Lowell Observatory – and it still hasn't completed a single trip around the Sun since. One Pluto year lasts about 248 Earth years, so its first full orbit since discovery ends around 2178. It sits about 5.9 billion km from the Sun, sunlight needs 5.5 hours to get there, and one day lasts about 153 hours. Tombaugh's ashes flew past Pluto aboard NASA's New Horizons in 2015.\n\nSources: NASA Science, NASA NSSDC, Live Science, IFLScience, Wikipedia, EarthSky, Nature, Space.com\n\n#shorts #facts #crazyfacts #space #pluto #nasa #astronomy #didyouknow",
+  "tags": ["facts", "crazy facts", "pluto", "space", "astronomy", "nasa", "new horizons", "clyde tombaugh", "solar system", "did you know", "shorts"],
+  "comment": "Do you think Pluto should be a planet again? 🪐👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Pluto has not finished a single trip around the Sun since we discovered it.", "anim": "title", "headline": "PLUTO HASN'T\nFINISHED\nONE ORBIT", "emoji": ["🪐", "🤯"]},
+    {"text": "In 1930, a farm boy named Clyde Tombaugh, just twenty-four years old, spotted it through a telescope in Arizona.", "anim": "pop", "emoji": ["👦", "🔭", "🌾"]},
+    {"text": "But one year on Pluto lasts about two hundred and forty-eight Earth years.", "anim": "stat", "to": 248, "suffix": " YEARS", "label": "ONE PLUTO YEAR", "emoji": ["🪐", "⏳"]},
+    {"text": "So its first full lap since discovery won't end until around the year 2178.", "anim": "timeline", "points": [{"year": "1930", "label": "FOUND", "emoji": "🔭"}, {"year": "2178", "label": "ONE LAP", "emoji": "🪐"}], "gap": "248 YEARS"},
+    {"text": "It's about five point nine billion kilometers away. Even sunlight needs five and a half hours to get there.", "anim": "run", "emoji": ["☀️"], "trail": "⚡"},
+    {"text": "And one single day on Pluto lasts about one hundred fifty-three hours.", "anim": "versus", "sides": [{"emoji": "🌍", "label": "EARTH DAY", "value": "24 H"}, {"emoji": "🪐", "label": "PLUTO DAY", "value": "153 H"}]},
+    {"text": "The twist? Tombaugh's ashes finally flew past Pluto in 2015, on NASA's New Horizons spacecraft.", "anim": "zoom", "emoji": ["🚀", "🪐"], "orbit": "✨"},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
