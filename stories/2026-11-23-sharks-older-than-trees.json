@@ -1,0 +1,18 @@
+{
+  "title": "Sharks Are Older Than Trees 🦈 #shorts",
+  "description": "The earliest shark-like fish, known from fossil scales, swam in Earth's oceans about 450 million years ago. The first trees, like the Gilboa forest of New York, only appeared around 385 million years ago – a head start of roughly 65 million years. Dinosaurs came even later, about 230 million years ago, and as a group sharks have made it through all five of Earth's big mass extinctions.\n\nSources: Live Science, Smithsonian Magazine, Australian Museum, BBC Discover Wildlife, Natural History Museum London, Nature (Stein et al. 2007), ScienceDaily\n\n#shorts #facts #crazyfacts #animals #sharks #trees #dinosaurs #didyouknow",
+  "tags": ["facts", "crazy facts", "sharks", "trees", "dinosaurs", "evolution", "prehistoric", "animals", "ocean", "did you know", "shorts"],
+  "comment": "What do you think is the oldest animal still around today? 🦈👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Sharks are older than trees.", "anim": "title", "headline": "SHARKS ARE\nOLDER THAN\nTREES", "emoji": ["🦈", "🌳"]},
+    {"text": "The first shark-like fish swam in Earth's oceans about four hundred fifty million years ago.", "anim": "pop", "emoji": ["🦈", "🌊", "🐟"]},
+    {"text": "The first trees only showed up around three hundred eighty-five million years ago.", "anim": "timeline", "points": [{"year": "450M", "label": "SHARKS", "emoji": "🦈"}, {"year": "385M", "label": "TREES", "emoji": "🌳"}], "gap": "65 MILLION YEARS"},
+    {"text": "So for millions of years, sharks were hunting while the land had no forests at all.", "anim": "run", "emoji": ["🦈"], "trail": "🌊"},
+    {"text": "And dinosaurs? They only appeared about two hundred thirty million years ago.", "anim": "versus", "sides": [{"emoji": "🦈", "label": "SHARKS", "value": "450M"}, {"emoji": "🦖", "label": "DINOSAURS", "value": "230M"}]},
+    {"text": "That makes sharks over two hundred million years older than dinosaurs.", "anim": "stat", "to": 220, "suffix": "M", "label": "YEARS OLDER THAN DINOS", "emoji": ["🦖", "🦈"]},
+    {"text": "The twist? As a group, sharks survived all five of Earth's mass extinctions.", "anim": "shake", "emoji": ["☄️", "🦈"]},
+    {"text": "Even the asteroid that wiped out the dinosaurs could not stop them.", "anim": "zoom", "emoji": ["🦈", "✨"], "orbit": "☄️"},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
