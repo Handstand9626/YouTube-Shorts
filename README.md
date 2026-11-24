@@ -29,3 +29,16 @@ einmal mit KI-Stimmen und einmal nur mit Musik und Untertiteln zum Selbst-Einspr
 for v in thorsten kerstin; do curl -sL https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-de-$v-low.tar.gz | tar xz -C voices; done
 python3 mitochondrien/make_video.py videos
 ```
+
+### Video 2: nach Arbeitsauftrag und Lehrbuch S. 26–28
+
+`mitochondrien/make_video2.py` nutzt dieselbe Engine und hält sich eng an Arbeitsauftrag und Lehrbuch:
+exergonisch/endergonisch, energetische Kopplung, Lastwagen-Modell mit Grenzen, Redoxreaktion
+(Oxidations-/Reduktionsmittel), NAD⁺/NADH + H⁺, ATP (Phosphorylierung, 32 kJ/mol, 70 kg pro Tag),
+Energieübertragung im Mitochondrium – plus vier Aufgaben zum Mitdenken (angelehnt an S. 26 Nr. 2–4, S. 28 Nr. 3).
+Sprechertext: `mitochondrien/SKRIPT_video2.md`.
+
+```bash
+python3 mitochondrien/make_video2.py videos                    # mitochondrien-video2.mp4 + -ohne-ton.mp4
+NAMEN="Name 1 & Name 2" python3 mitochondrien/make_video2.py   # Namen im Abspann
+```

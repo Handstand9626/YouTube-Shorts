@@ -7,8 +7,8 @@ Erzeugt: mitochondrien-energie.mp4            (mit zwei KI-Sprecherstimmen)
          mitochondrien-energie-ohne-ton.mp4   (nur Musik + Untertitel, zum Selbst-Einsprechen)
          SKRIPT.md                            (Sprechertext mit Zeitmarken)
 """
-import io, math, os, random, subprocess, sys, wave
-from multiprocessing import Pool
+import io, math, os, random, re, subprocess, sys, wave
+from multiprocessing import get_context
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
@@ -20,8 +20,13 @@ REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 VOICES = {"A": os.path.join(ROOT, "voices", "de-thorsten-low.onnx"),
           "B": os.path.join(ROOT, "voices", "de-kerstin-low.onnx")}
 SPK = {"A": ("Sprecher 1", (77, 208, 225)), "B": ("Sprecher 2", (255, 138, 201))}
-SAY = [("NADH", "N A D H"), ("NAD⁺", "NAD plus"), ("H⁺-Ionen", "H plus Ionen"), ("H⁺", "H plus"),
-       ("O₂", "O 2"), ("e⁻", "Elektronen")]
+LENGTH = {"A": None, "B": None}                  # Piper length_scale per speaker (None = voice default)
+GAPS = dict(pre=0.9, line=0.45, post=0.8)        # pauses in seconds: scene start, between lines, scene end
+# spoken form of symbols (order matters: longer phrases first)
+SAY = [("NAD⁺/NADH + H⁺", "NAD plus, N A D H plus H plus"), ("NADH + H⁺", "N A D H plus H plus"),
+       ("ATP/ADP", "ATP-ADP"), ("NADH", "N A D H"), ("NAD⁺", "NAD plus"), ("H⁺-Ionen", "H plus Ionen"),
+       ("H⁺", "H plus"), ("H₂O", "H 2 O"), ("O₂", "O 2"), ("e⁻", "Elektronen"), ("Kilojoule", "Kilodschul"),
+       (" ", " ")]
 
 # colours
 WHITE, GREY = (240, 244, 250), (150, 165, 185)
@@ -236,9 +241,11 @@ class Cv:
 
 
 class T:
-    """Timing of one scene: t = local time, L = start time of every spoken line."""
-    def __init__(self, t, L, dur, gt):
+    """Timing of one scene: t = local time, L/E = start/end time of every line, X = line texts."""
+    def __init__(self, t, L, dur, gt, E=None, X=None):
         self.t, self.L, self.dur, self.gt = t, L, dur, gt
+        self.E = E if E is not None else L
+        self.X = X if X is not None else [""] * len(L)
 
     def s(self, k, delay=0.0):
         return self.t - self.L[k] - delay if k < len(self.L) else -1.0
@@ -248,6 +255,24 @@ class T:
 
     def b(self, k, delay=0.0, d=0.5):
         return back(self.s(k, delay) / d) if self.s(k, delay) > 0 else 0.0
+
+    def tw(self, k, word, n=1):
+        """Estimated scene time at which `word` (n-th occurrence) is spoken in line k."""
+        if k >= len(self.L): return 1e9
+        txt, i = self.X[k], -1
+        for _ in range(n):
+            i = txt.find(word, i + 1)
+            if i < 0: break
+        if i < 0 or not txt: return self.L[k]
+        return self.L[k] + (self.E[k] - self.L[k]) * i / len(txt)
+
+    def w(self, k, word, delay=0.0, d=0.5, n=1):
+        """0 -> 1 ease once `word` in line k is spoken (plus delay)."""
+        return ease((self.t - self.tw(k, word, n) - delay) / d)
+
+    def wb(self, k, word, delay=0.0, d=0.5, n=1):
+        x = (self.t - self.tw(k, word, n) - delay) / d
+        return back(x) if x > 0 else 0.0
 
 
 def path_pos(pts, s):
@@ -611,7 +636,7 @@ def make_bg():
 
 def wrap(c, s, size, maxw, bold=False):
     lines, cur = [], ""
-    for w in s.split():
+    for w in s.split(" "):      # only plain spaces: no-break spaces keep "NADH + H⁺" together
         if cur and c.tw(cur + " " + w, size, bold) > maxw:
             lines.append(cur); cur = w
         else:
@@ -620,6 +645,27 @@ def wrap(c, s, size, maxw, bold=False):
 
 
 G = {}
+_bar_fonts = {}
+
+
+def draw_chapters(img, t, total, chapters):
+    """Segmented progress bar with chapter names, drawn after the scene fade so it never blinks."""
+    d = ImageDraw.Draw(img, "RGBA")
+    for label, s0, s1 in chapters:
+        x0, x1 = W * s0 / total + 3, W * s1 / total - 3
+        d.rectangle([x0, 0, x1, 7], fill=(255, 255, 255, 45))
+        xf = min(x1, W * t / total)
+        if xf > x0:
+            d.rectangle([x0, 0, xf, 7], fill=EL + (235,))
+        cur = s0 <= t < s1
+        for size in (17, 16, 15, 14, 13):
+            if (size, cur) not in _bar_fonts:
+                _bar_fonts[(size, cur)] = ImageFont.truetype(BOLD if cur else REG, size)
+            f = _bar_fonts[(size, cur)]
+            if d.textlength(label, font=f) <= x1 - x0 - 8:
+                d.text(((x0 + x1) / 2, 23), label, font=f, anchor="mm",
+                       fill=EL + (255,) if cur else (220, 228, 240, 130))
+                break
 
 
 def render_frame(fi):
@@ -628,19 +674,21 @@ def render_frame(fi):
     sc = next((s for s in scenes if s["start"] <= t < s["end"]), scenes[-1])
     lt = t - sc["start"]
     c = Cv(bg)
-    DRAW[sc["kind"]](c, T(lt, [l["start"] - sc["start"] for l in sc["lines"]], sc["end"] - sc["start"], t))
+    ls = sc["lines"]
+    DRAW[sc["kind"]](c, T(lt, [l["start"] - sc["start"] for l in ls], sc["end"] - sc["start"], t,
+                          [l["end"] - sc["start"] for l in ls], [l["text"] for l in ls]))
     if sc["head"]:
         a = ease(lt / 0.5)
         c.text(70, 78, sc["head"], 50, WHITE, "lm", a)
         c.rect(70, 116, 70 + 150 * a, 122, EL, None, 0, 3, a)
-    # caption
+    # caption (pause lines have none)
     ln = None
-    for l in sc["lines"]:
-        if l["start"] - 0.15 <= t < l["end"] + 0.25: ln = l
+    for l in ls:
+        if l["sp"] in SPK and l["start"] - 0.15 <= t < l["end"] + 0.25: ln = l
     if ln:
         name, col = SPK[ln["sp"]]
         a = min(1, (t - ln["start"] + 0.15) / 0.2, (ln["end"] + 0.25 - t) / 0.2)
-        lines = wrap(c, ln["text"], 36, 1620)
+        lines = wrap(c, ln["text"].replace(" + H⁺", " + H⁺"), 36, 1620)
         hh = 28 + len(lines) * 46
         y0 = 1056 - hh
         c.rect(100, y0, 1820, 1056, (0, 0, 0), None, 0, 20, 0.62 * a)
@@ -648,12 +696,16 @@ def render_frame(fi):
         c.text(124, y0 - 22, name, 26, col, "lm", a)
         for i, s in enumerate(lines):
             c.text(960, y0 + 14 + 23 + i * 46, s, 36, WHITE, "mm", a, False)
-    c.rect(0, 0, W * t / total, 6, EL, None, 0, 0, 0.9)
+    chapters = G.get("chapters")
+    if not chapters:
+        c.rect(0, 0, W * t / total, 6, EL, None, 0, 0, 0.9)
     img = c.img.reduce(SS).convert("RGB")
     fade = min(lt / 0.35, (sc["end"] - t) / 0.35, 1.0)
     if t < 0.35 or total - t < 0.5 or (fade < 1 and True):
         fade = max(0.0, min(fade, (total - t) / 0.5))
         img = Image.blend(G["bg_small"], img, fade)
+    if chapters:
+        draw_chapters(img, t, total, chapters)
     return img.tobytes()
 
 
@@ -672,11 +724,12 @@ def render_segment(args):
 def say_text(s):
     for a, b in SAY:
         s = s.replace(a, b)
-    return s
+    # espeak reads "ATP," / "ADP," as one word ("atp") - spell them out before a comma
+    return re.sub(r"\b(ATP|ADP)(?=,)", lambda m: " ".join(m.group(1)), s)
 
 
 def tts(scenes):
-    from piper import PiperVoice
+    from piper import PiperVoice, SynthesisConfig
     voices = {k: PiperVoice.load(p) for k, p in VOICES.items()}
     for v in voices.values():      # piper splits "ç" (ich-Laut) into c + cedilla; the old voices need it whole
         def fixed(text, _ph=v.phonemize):
@@ -691,9 +744,13 @@ def tts(scenes):
         v.phonemize = fixed
     for sc in scenes:
         for l in sc["lines"]:
+            if l["sp"] not in SPK:                  # pause line: silence
+                l["audio"] = np.zeros(int(l["pause"] * SR), np.float32)
+                continue
             b = io.BytesIO()
             with wave.open(b, "wb") as wf:
-                voices[l["sp"]].synthesize_wav(say_text(l["text"]), wf)
+                voices[l["sp"]].synthesize_wav(say_text(l["text"]), wf,
+                                               SynthesisConfig(length_scale=LENGTH.get(l["sp"])))
             b.seek(0)
             with wave.open(b) as wf:
                 sr = wf.getframerate()
@@ -729,56 +786,90 @@ def write_wav(path, x):
         wf.writeframes((x * 32767).astype(np.int16).tobytes())
 
 
-# ---------------------------------------------------------------- main
-def main(out_dir):
+def tick():
+    n = int(0.05 * SR); tt = np.arange(n) / SR
+    return (np.sin(2 * np.pi * 1200 * tt) * np.exp(-tt * 70) * 0.35).astype(np.float32)
+
+
+def mmss(s):
+    return f"{int(s // 60)}:{int(s % 60):02d}"
+
+
+# ---------------------------------------------------------------- render
+def render(scene_defs, out_dir, name, skript_path, skript_title, chapters=None, intro=""):
+    """Scene defs: (kind, header, lines[, chapter index]). A line is (speaker, text) with speaker in SPK,
+    ("?", seconds) for a quiz pause with countdown ticks, or ("-", seconds) for a silent pause."""
     os.makedirs(out_dir, exist_ok=True)
-    work = os.path.join(out_dir, "mito_work"); os.makedirs(work, exist_ok=True)
-    scenes = [dict(kind=k, head=h, lines=[dict(sp=s, text=x) for s, x in ls]) for k, h, ls in SCENES]
+    work = os.path.join(out_dir, f"{name}_work"); os.makedirs(work, exist_ok=True)
+    scenes = []
+    for d in scene_defs:
+        kind, head, ls = d[:3]
+        lines = [dict(sp=s, text=x, pause=0.0) if s in SPK else dict(sp=s, text="", pause=float(x)) for s, x in ls]
+        scenes.append(dict(kind=kind, head=head, chapter=d[3] if len(d) > 3 else None, lines=lines))
     tts(scenes)
     t = 0.0
     for sc in scenes:
-        sc["start"] = t; t += 0.9
+        sc["start"] = t; t += GAPS["pre"]
         for l in sc["lines"]:
-            l["start"] = t; l["end"] = t + len(l["audio"]) / SR; t = l["end"] + 0.45
-        t += 0.8; sc["end"] = t
+            l["start"] = t; l["end"] = t + len(l["audio"]) / SR; t = l["end"] + GAPS["line"]
+        t += GAPS["post"]; sc["end"] = t
     total = t
-    voice = np.zeros(int(total * SR) + SR, np.float32)
+    n = int(total * SR)
+    voice, fx, tk = np.zeros(n + SR, np.float32), np.zeros(n + SR, np.float32), tick()
     for sc in scenes:
         for l in sc["lines"]:
             i = int(l["start"] * SR); voice[i:i + len(l["audio"])] += l["audio"]
-    voice = voice[: int(total * SR)]
-    mus = music(total)[: len(voice)]
-    write_wav(f"{work}/voice.wav", voice + mus * 0.16)
-    write_wav(f"{work}/music.wav", mus * 0.5)
+            if l["sp"] == "?":
+                for j in range(int(l["pause"])):
+                    k = int((l["start"] + j) * SR); fx[k:k + len(tk)] += tk
+    voice, fx = voice[:n], fx[:n]
+    mus = music(total)[:n]
+    write_wav(f"{work}/voice.wav", voice + fx + mus * 0.16)
+    write_wav(f"{work}/music.wav", fx + mus * 0.5)
 
-    with open(os.path.join(HERE, "SKRIPT.md"), "w") as f:
-        f.write("# Skript: Energiegewinnung im Mitochondrium\n\n"
-                f"Gesamtlänge: {int(total // 60)}:{int(total % 60):02d} min · zwei Sprecher im Wechsel. "
-                "Die Zeitmarken passen zum Video – so könnt ihr die Version ohne Stimmen selbst einsprechen.\n")
-        for sc in scenes:
-            f.write(f"\n## {sc['head'] or 'Einstieg'}\n\n")
+    with open(skript_path, "w") as f:
+        f.write(f"# {skript_title}\n\n"
+                f"Gesamtlänge: {mmss(total)} min · zwei Sprecher im Wechsel. "
+                "Die Zeitmarken passen zum Video – so könnt ihr die Version ohne Stimmen selbst einsprechen.\n" + intro)
+        for i, sc in enumerate(scenes):
+            f.write(f"\n## {sc['head'] or ('Einstieg' if i == 0 else 'Abschluss')}\n\n")
             for l in sc["lines"]:
-                f.write(f"- `{int(l['start'] // 60)}:{int(l['start'] % 60):02d}` **{SPK[l['sp']][0]}:** {l['text']}\n")
+                if l["sp"] == "?":
+                    f.write(f"- `{mmss(l['start'])}` *(Pause {l['pause']:.0f} s – Zeit zum Überlegen)*\n")
+                elif l["sp"] in SPK:
+                    f.write(f"- `{mmss(l['start'])}` **{SPK[l['sp']][0]}:** {l['text']}\n")
 
+    segs = None
+    if chapters:
+        segs = []
+        for ci, label in enumerate(chapters):
+            scs = [s for s in scenes if s["chapter"] == ci]
+            if scs:
+                segs.append((label, min(s["start"] for s in scs), max(s["end"] for s in scs)))
     G.update(scenes=[dict(sc, lines=[{k: v for k, v in l.items() if k != "audio"} for l in sc["lines"]]) for sc in scenes],
-             total=total, bg=make_bg())
+             total=total, bg=make_bg().convert("RGB"), chapters=segs)   # RGB canvas: RGBA draws get alpha-blended
     G["bg_small"] = G["bg"].reduce(SS).convert("RGB")
     if os.environ.get("FRAMES"):          # debug: dump single frames (seconds, comma separated)
         for s in os.environ["FRAMES"].split(","):
             Image.frombytes("RGB", (W, H), render_frame(int(float(s) * FPS))).save(f"{work}/f_{float(s):06.1f}.png")
-        print("total", total, [(sc["kind"], round(sc["start"], 1), [round(l["start"], 1) for l in sc["lines"]]) for sc in scenes])
+        print("total", round(total, 1), [(sc["kind"], round(sc["start"], 1), [round(l["start"], 1) for l in sc["lines"]]) for sc in scenes])
         return
     nf = int(total * FPS); nproc = os.cpu_count() or 2; step = math.ceil(nf / (nproc * 4))
     jobs = [(k, f0, min(nf, f0 + step), f"{work}/seg{k:03d}.mp4") for k, f0 in enumerate(range(0, nf, step))]
-    with Pool(nproc) as pool:
-        segs = pool.map(render_segment, jobs, chunksize=1)
+    with get_context("fork").Pool(nproc) as pool:     # workers inherit G and DRAW (also from make_video2)
+        segs_out = pool.map(render_segment, jobs, chunksize=1)
     with open(f"{work}/list.txt", "w") as f:
-        f.writelines(f"file '{os.path.abspath(s)}'\n" for s in segs)
-    for name, wav in [("mitochondrien-energie.mp4", "voice.wav"), ("mitochondrien-energie-ohne-ton.mp4", "music.wav")]:
+        f.writelines(f"file '{os.path.abspath(s)}'\n" for s in segs_out)
+    for out, wav in [(f"{name}.mp4", "voice.wav"), (f"{name}-ohne-ton.mp4", "music.wav")]:
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", f"{work}/list.txt",
                         "-i", f"{work}/{wav}", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest",
-                        "-movflags", "+faststart", os.path.join(out_dir, name)], check=True)
-        print(os.path.join(out_dir, name), f"{total:.1f}s")
+                        "-movflags", "+faststart", os.path.join(out_dir, out)], check=True)
+        print(os.path.join(out_dir, out), f"{total:.1f}s")
+
+
+def main(out_dir):
+    render(SCENES, out_dir, "mitochondrien-energie", os.path.join(HERE, "SKRIPT.md"),
+           "Skript: Energiegewinnung im Mitochondrium")
 
 
 if __name__ == "__main__":
