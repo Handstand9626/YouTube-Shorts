@@ -1,0 +1,115 @@
+{
+  "title": "Nothing Was Taller Than This for 3,800 Years 🔺 #shorts",
+  "description": "The Great Pyramid of Giza was built for the pharaoh Khufu around 4,500 years ago. It originally stood about 146 metres (481 ft) tall and is made of roughly 2.3 million stone blocks averaging about 2.3 tonnes each. For around 3,800 years it was the tallest structure humans had ever built, until the spire of England's Lincoln Cathedral passed it around 1311 – and that spire blew down in a storm in 1548, while the pyramid still stands.\n\nSources: Encyclopaedia Britannica, World History Encyclopedia, PBS NOVA, History Hit, Time, Wikipedia\n\n#shorts #facts #crazyfacts #history #egypt #pyramids #ancientegypt #didyouknow",
+  "tags": [
+    "facts",
+    "crazy facts",
+    "great pyramid",
+    "giza",
+    "ancient egypt",
+    "pyramids",
+    "history",
+    "khufu",
+    "lincoln cathedral",
+    "did you know",
+    "shorts"
+  ],
+  "comment": "Which ancient wonder would you visit first if you could time travel? 🔺👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "For about three thousand eight hundred years, nothing humans built was taller than this.",
+      "anim": "title",
+      "headline": "TALLEST FOR\n3,800\nYEARS",
+      "emoji": [
+        "🔺",
+        "🏆"
+      ]
+    },
+    {
+      "text": "It's the Great Pyramid of Giza, built for the pharaoh Khufu around four and a half thousand years ago.",
+      "anim": "zoom",
+      "emoji": [
+        "🔺",
+        "👑"
+      ],
+      "orbit": "☀️"
+    },
+    {
+      "text": "When it was finished, it stood about one hundred forty six meters tall. That's like a forty story building.",
+      "anim": "stat",
+      "to": 146,
+      "suffix": " M",
+      "label": "ORIGINAL HEIGHT",
+      "emoji": [
+        "🔺",
+        "📏"
+      ]
+    },
+    {
+      "text": "It's made of around two point three million stone blocks.",
+      "anim": "stat",
+      "to": 2.3,
+      "decimals": 1,
+      "suffix": " MILLION",
+      "label": "STONE BLOCKS",
+      "emoji": [
+        "🧱",
+        "🏜️"
+      ]
+    },
+    {
+      "text": "And the average block weighs about two point three tons. As much as a big car!",
+      "anim": "versus",
+      "sides": [
+        {
+          "emoji": "🧱",
+          "label": "ONE BLOCK",
+          "value": "2.3 TONS"
+        },
+        {
+          "emoji": "🚙",
+          "label": "BIG CAR",
+          "value": "~2 TONS"
+        }
+      ]
+    },
+    {
+      "text": "It kept the record until around thirteen eleven, when the spire of Lincoln Cathedral in England finally beat it.",
+      "anim": "timeline",
+      "points": [
+        {
+          "year": "2560 BC",
+          "label": "PYRAMID",
+          "emoji": "🔺"
+        },
+        {
+          "year": "1311",
+          "label": "CATHEDRAL",
+          "emoji": "⛪"
+        }
+      ],
+      "gap": "~3,800 YEARS"
+    },
+    {
+      "text": "But here's the twist. In fifteen forty eight, a storm blew that spire down.",
+      "anim": "shake",
+      "emoji": [
+        "⛪",
+        "🌪️"
+      ]
+    },
+    {
+      "text": "The cathedral never rebuilt it. And the pyramid? Still standing.",
+      "anim": "pop",
+      "emoji": [
+        "🔺",
+        "😎"
+      ]
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
