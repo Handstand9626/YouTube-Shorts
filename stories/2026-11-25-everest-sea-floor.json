@@ -1,0 +1,113 @@
+{
+  "title": "The Top of Everest Was Once the Bottom of the Sea 🏔️ #shorts",
+  "description": "The summit of Mount Everest, 8,849 metres (29,032 ft) above sea level, is made of limestone that formed on a warm, shallow sea floor about 470 million years ago. The rock holds fossils of sea creatures like trilobites, brachiopods and crinoids (sea lilies). It was lifted to the top of the world after India collided with Asia around 50 million years ago – and the Himalayas are still being pushed up today.\n\nSources: Encyclopaedia Britannica, Montana State University, IUGS Geoheritage, USGS, Geological Society of London, NPR, Al Jazeera\n\n#shorts #facts #crazyfacts #everest #geology #fossils #mountains #didyouknow",
+  "tags": [
+    "facts",
+    "crazy facts",
+    "mount everest",
+    "everest",
+    "geology",
+    "fossils",
+    "himalayas",
+    "plate tectonics",
+    "trilobites",
+    "did you know",
+    "shorts"
+  ],
+  "comment": "Would you climb Everest to touch a 470-million-year-old sea floor? 🏔️👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "The top of Mount Everest used to be the bottom of the sea.",
+      "anim": "title",
+      "headline": "EVEREST'S TOP\nWAS THE\nSEA FLOOR",
+      "emoji": [
+        "🏔️",
+        "🌊"
+      ]
+    },
+    {
+      "text": "Everest is the highest mountain on Earth. Its peak is about eight thousand eight hundred fifty meters above sea level.",
+      "anim": "stat",
+      "to": 8849,
+      "suffix": " M",
+      "label": "ABOVE SEA LEVEL",
+      "emoji": [
+        "🏔️",
+        "🚩"
+      ]
+    },
+    {
+      "text": "But the summit is made of limestone. Rock that formed at the bottom of a warm, shallow sea.",
+      "anim": "rain",
+      "emoji": [
+        "🌊",
+        "🪨"
+      ],
+      "drop": "🐚"
+    },
+    {
+      "text": "That sea floor formed about four hundred seventy million years ago. Long before the dinosaurs.",
+      "anim": "timeline",
+      "points": [
+        {
+          "year": "470M",
+          "label": "SEA FLOOR",
+          "emoji": "🌊"
+        },
+        {
+          "year": "NOW",
+          "label": "SUMMIT",
+          "emoji": "🏔️"
+        }
+      ],
+      "gap": "470 MILLION YEARS"
+    },
+    {
+      "text": "And the rock is full of fossils. Ancient sea creatures like trilobites, sea lilies and tiny shelled animals.",
+      "anim": "pop",
+      "emoji": [
+        "🐚",
+        "🦐",
+        "🦀"
+      ]
+    },
+    {
+      "text": "So how did they get up there? Around fifty million years ago, India crashed into Asia.",
+      "anim": "shake",
+      "emoji": [
+        "🌏",
+        "💥"
+      ]
+    },
+    {
+      "text": "The crash crumpled the old sea floor and pushed it almost nine kilometers into the sky.",
+      "anim": "versus",
+      "sides": [
+        {
+          "emoji": "🌊",
+          "label": "THEN",
+          "value": "SEA FLOOR"
+        },
+        {
+          "emoji": "🏔️",
+          "label": "NOW",
+          "value": "8.8 KM UP"
+        }
+      ]
+    },
+    {
+      "text": "And the Himalayas are still being pushed up today. So every climber on top is standing on an ancient ocean.",
+      "anim": "zoom",
+      "emoji": [
+        "🏔️",
+        "🧗"
+      ],
+      "orbit": "🐚"
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
