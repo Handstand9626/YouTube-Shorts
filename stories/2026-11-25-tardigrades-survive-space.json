@@ -1,0 +1,114 @@
+{
+  "title": "This Tiny Animal Survived Naked in Outer Space 🐻 #shorts",
+  "description": "Tardigrades, or \"water bears\", are eight-legged animals only about half a millimetre long. In 2007, ESA's FOTON-M3 mission exposed dried-out tardigrades to open space for 10 days in low Earth orbit, around 270 km up – and many came back to life when rehydrated, some even laying eggs. They can also survive cold down to about -200 °C, and in 2014 Japanese scientists revived tardigrades frozen in Antarctic moss for more than 30 years.\n\nSources: ESA, National Geographic, Scientific American, Space.com, CBC News, Gizmodo, Carleton College SERC, UC ANR\n\n#shorts #facts #crazyfacts #tardigrade #waterbear #animals #space #didyouknow",
+  "tags": [
+    "facts",
+    "crazy facts",
+    "tardigrade",
+    "water bear",
+    "tardigrades in space",
+    "animals",
+    "space",
+    "extremophiles",
+    "biology",
+    "did you know",
+    "shorts"
+  ],
+  "comment": "If you could have ONE tardigrade superpower, which would you pick? 🐻👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {
+      "text": "This animal survived ten days in open space. No suit, no ship.",
+      "anim": "title",
+      "headline": "IT SURVIVED\nOPEN SPACE",
+      "emoji": [
+        "🐻",
+        "🚀"
+      ]
+    },
+    {
+      "text": "It's a tardigrade, or water bear. Eight stubby legs, about half a millimeter long.",
+      "anim": "stat",
+      "to": 0.5,
+      "decimals": 1,
+      "suffix": " MM",
+      "label": "TINY WATER BEAR",
+      "emoji": [
+        "🐻",
+        "🔬"
+      ]
+    },
+    {
+      "text": "Discovered in seventeen seventy three. In two thousand seven, Europe's space agency sent them into orbit.",
+      "anim": "timeline",
+      "points": [
+        {
+          "year": "1773",
+          "label": "DISCOVERED",
+          "emoji": "🔬"
+        },
+        {
+          "year": "2007",
+          "label": "SENT TO SPACE",
+          "emoji": "🚀"
+        }
+      ],
+      "gap": "234 YEARS"
+    },
+    {
+      "text": "Dried-out water bears rode outside a capsule, exposed to the vacuum and the sun's radiation.",
+      "anim": "rain",
+      "emoji": [
+        "🐻",
+        "☀️"
+      ],
+      "drop": "⚡"
+    },
+    {
+      "text": "Back on Earth, scientists added water. Many woke up. Some even laid eggs!",
+      "anim": "pop",
+      "emoji": [
+        "💧",
+        "🐻",
+        "🥚"
+      ]
+    },
+    {
+      "text": "They also survive cold down to minus two hundred degrees Celsius.",
+      "anim": "versus",
+      "sides": [
+        {
+          "emoji": "🧊",
+          "label": "COLD",
+          "value": "-200 °C"
+        },
+        {
+          "emoji": "🐻",
+          "label": "WATER BEAR",
+          "value": "STILL ALIVE"
+        }
+      ]
+    },
+    {
+      "text": "Their secret? They dry out, curl into a ball called a tun, and almost shut down.",
+      "anim": "shake",
+      "emoji": [
+        "🐻",
+        "💤"
+      ]
+    },
+    {
+      "text": "In twenty fourteen, scientists woke up water bears frozen in Antarctic moss for over thirty years.",
+      "anim": "zoom",
+      "emoji": [
+        "🐻",
+        "🧊"
+      ],
+      "orbit": "❄️"
+    },
+    {
+      "text": "Subscribe for a new crazy fact every day!",
+      "anim": "subscribe"
+    }
+  ]
+}
