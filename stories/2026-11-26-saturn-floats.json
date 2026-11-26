@@ -1,0 +1,18 @@
+{
+  "title": "Saturn Could Float in a Bathtub 🪐 #shorts",
+  "description": "Saturn is so big that more than 700 Earths would fit inside it, yet its average density is only about 0.69 g/cm³ – roughly 70% of water. It is the only planet in our solar system less dense than water, so in a big enough bathtub it would (in theory) float. It also spins once every ~10.7 hours, and its rings are only about 10 metres thick in most places.\n\nSources: NASA, NASA/JPL, Encyclopaedia Britannica, Royal Museums Greenwich, Guinness World Records, Caltech IPAC Cool Cosmos, Universe Today\n\n#shorts #facts #crazyfacts #saturn #space #planets #astronomy #didyouknow",
+  "tags": ["facts", "crazy facts", "saturn", "saturn floats", "space", "planets", "astronomy", "solar system", "density", "saturn rings", "did you know", "shorts"],
+  "comment": "If you had a bathtub big enough, what planet would YOU try to float next? 🪐👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Saturn is a giant planet. But in a big enough bathtub, it would float.", "anim": "title", "headline": "SATURN\nWOULD\nFLOAT", "emoji": ["🪐", "🛁"]},
+    {"text": "Saturn is huge. More than seven hundred Earths could fit inside it.", "anim": "count", "to": 764, "label": "EARTHS INSIDE", "emoji": ["🌍"], "under": "🪐"},
+    {"text": "Yet it only weighs about ninety five times as much as Earth.", "anim": "versus", "sides": [{"emoji": "📦", "label": "SIZE", "value": "764 EARTHS"}, {"emoji": "⚖️", "label": "MASS", "value": "95 EARTHS"}]},
+    {"text": "That's because it's made mostly of hydrogen and helium, the lightest gases there are.", "anim": "rain", "emoji": ["🪐", "🎈"], "drop": "💨"},
+    {"text": "Its average density is only about zero point seven grams per cubic centimeter. Water is one.", "anim": "stat", "to": 0.69, "decimals": 2, "suffix": " g/cm³", "label": "WATER IS 1.00", "emoji": ["🪐", "💧"]},
+    {"text": "It's the only planet in our solar system lighter than water.", "anim": "zoom", "emoji": ["🪐", "🏆"], "orbit": "💧"},
+    {"text": "And it spins fast. A whole day on Saturn lasts only about ten point seven hours.", "anim": "run", "emoji": ["🪐"], "trail": "💨"},
+    {"text": "The twist? Its famous rings are hundreds of thousands of kilometers across, but in most places only about ten meters thick.", "anim": "shake", "emoji": ["💍", "🤯"]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
