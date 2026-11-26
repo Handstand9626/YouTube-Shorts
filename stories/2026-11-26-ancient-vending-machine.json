@@ -1,0 +1,18 @@
+{
+  "title": "The First Vending Machine Sold Holy Water 2,000 Years Ago 🪙 #shorts",
+  "description": "The earliest known coin-operated vending machine was described by the Greek engineer Heron (Hero) of Alexandria in the 1st century AD. Temple visitors dropped in a five-drachma coin, which tipped a small lever, opened a valve and released a portion of holy water until the coin slid off. Modern coin machines only caught on in London in the 1880s, selling postcards – and today Japan alone has nearly 4 million vending machines.\n\nSources: Smithsonian (via Mental Floss), Smith College, Sky HISTORY, 99% Invisible, Gizmodo, Japan Vending System Manufacturers Association (via Statista/SoraNews24)\n\n#shorts #facts #crazyfacts #history #inventions #ancientgreece #vendingmachine #didyouknow",
+  "tags": ["facts", "crazy facts", "vending machine", "first vending machine", "heron of alexandria", "hero of alexandria", "ancient inventions", "ancient greece", "history", "inventions", "did you know", "shorts"],
+  "comment": "What would YOU want a 2,000-year-old vending machine to sell? 🪙👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "The first vending machine didn't sell snacks. It sold holy water, almost two thousand years ago.", "anim": "title", "headline": "ANCIENT\nVENDING\nMACHINE", "emoji": ["🪙", "💧"]},
+    {"text": "It was designed by Heron, a Greek engineer in Alexandria, Egypt, in the first century.", "anim": "zoom", "emoji": ["🏛️", "⚙️"], "orbit": "💧"},
+    {"text": "The problem? Temple visitors kept taking more holy water than they paid for.", "anim": "rain", "emoji": ["🏛️", "😬"], "drop": "💧"},
+    {"text": "So Heron's machine took a coin. The price for one portion: five drachmas.", "anim": "stat", "to": 5, "suffix": " DRACHMAS", "label": "ONE PORTION", "emoji": ["🪙", "💧"]},
+    {"text": "The coin landed on a tiny tray on a lever. The tray tipped, a valve opened, and water flowed.", "anim": "pop", "emoji": ["🪙", "⚖️", "💧"]},
+    {"text": "When the coin slid off, the valve closed again. No electricity at all.", "anim": "versus", "sides": [{"emoji": "⚡", "label": "ELECTRICITY", "value": "NONE"}, {"emoji": "⚙️", "label": "PARTS", "value": "LEVER + VALVE"}]},
+    {"text": "Modern coin machines only caught on in London in the eighteen eighties, selling postcards.", "anim": "timeline", "points": [{"year": "1ST CENTURY", "label": "HOLY WATER", "emoji": "💧"}, {"year": "1880s", "label": "POSTCARDS", "emoji": "📮"}], "gap": "~1,800 YEARS"},
+    {"text": "Today, Japan alone has nearly four million vending machines.", "anim": "count", "to": 4, "label": "MILLION IN JAPAN", "emoji": ["🥤"], "under": "🏙️"},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
