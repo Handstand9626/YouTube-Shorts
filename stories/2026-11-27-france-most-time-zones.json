@@ -1,0 +1,18 @@
+{
+  "title": "France Has More Time Zones Than Any Other Country 🕐 #shorts",
+  "description": "France uses 12 time zones – 13 if you count its claim in Antarctica – more than any other country, even Russia and the USA with 11 each. Mainland France has just one; the rest come from overseas territories spread from UTC−10 in French Polynesia to UTC+12 in Wallis and Futuna, a 22-hour spread. And thanks to French Guiana, France's longest land border (about 730 km) is with Brazil.\n\nSources: Guinness World Records, timeanddate.com, Wikipedia (Time in France, Brazil–France border), CIA World Factbook, France.fr, IFLScience, Statista\n\n#shorts #facts #crazyfacts #france #geography #timezones #travel #didyouknow",
+  "tags": ["facts", "crazy facts", "france", "time zones", "most time zones", "geography", "geography facts", "french polynesia", "french guiana", "travel", "did you know", "shorts"],
+  "comment": "Which country did YOU think had the most time zones? 🕐👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "The country with the most time zones on Earth is not Russia, and not the USA. It's France.", "anim": "title", "headline": "MOST TIME\nZONES ON\nEARTH?", "emoji": ["🕐", "🤯"]},
+    {"text": "France uses twelve time zones. Thirteen, if you count its claim in Antarctica.", "anim": "count", "to": 12, "label": "TIME ZONES", "emoji": ["🕐"], "under": "🌍"},
+    {"text": "Russia and the United States? They only have eleven each.", "anim": "versus", "sides": [{"emoji": "🥐", "label": "FRANCE", "value": "12"}, {"emoji": "🐻", "label": "RUSSIA", "value": "11"}]},
+    {"text": "Mainland France has just one. The rest come from overseas islands and territories all over the world.", "anim": "pop", "emoji": ["🏝️", "🌊", "🗺️"]},
+    {"text": "They stretch from ten hours behind world time in Tahiti, to twelve hours ahead in Wallis and Futuna.", "anim": "timeline", "points": [{"year": "UTC−10", "label": "TAHITI", "emoji": "🌺"}, {"year": "UTC+1", "label": "PARIS", "emoji": "🥖"}, {"year": "UTC+12", "label": "WALLIS", "emoji": "🏝️"}], "gap": "one country"},
+    {"text": "That's a spread of twenty-two hours inside one country.", "anim": "stat", "to": 22, "suffix": " h", "label": "HOUR SPREAD", "emoji": ["⏰", "🌍"]},
+    {"text": "In winter, when it's lunchtime in Paris, it's one in the morning in Tahiti.", "anim": "zoom", "emoji": ["🌙", "🌺"], "orbit": "⭐"},
+    {"text": "The twist? France's longest land border isn't with Spain. It's with Brazil, about seven hundred thirty kilometers through the jungle of French Guiana.", "anim": "shake", "emoji": ["🌴", "🤯"]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
