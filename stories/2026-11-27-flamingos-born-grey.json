@@ -1,0 +1,18 @@
+{
+  "title": "Flamingos Are Born Grey – Their Food Turns Them Pink 🦩 #shorts",
+  "description": "Flamingo chicks hatch with grey feathers. The pink comes from carotenoid pigments in the algae and brine shrimp they eat, and it takes about two to three years to reach full adult colour. Flamingos filter their food with their heads upside down, pumping water with their tongue about 12 times a second – and parents feeding their chicks red 'crop milk' can fade almost to white.\n\nSources: Smithsonian's National Zoo, Encyclopaedia Britannica, Wildfowl & Wetlands Trust (WWT), Live Science, San Diego Zoo Wildlife Alliance, Science News, NPR, UC Berkeley\n\n#shorts #facts #crazyfacts #flamingo #animals #birds #nature #didyouknow",
+  "tags": ["facts", "crazy facts", "flamingo", "flamingos", "why are flamingos pink", "animals", "birds", "animal facts", "nature", "wildlife", "did you know", "shorts"],
+  "comment": "If YOUR color depended on your favorite food, what color would you be? 🦩👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Flamingos are not born pink. They hatch grey, and their food slowly turns them pink.", "anim": "title", "headline": "FLAMINGOS\nARE BORN\nGREY", "emoji": ["🦩", "🐣"]},
+    {"text": "A flamingo chick is covered in fluffy grey and white feathers.", "anim": "pop", "emoji": ["🐣", "☁️", "🪶"]},
+    {"text": "The pink comes from pigments called carotenoids, found in the algae and tiny brine shrimp they eat.", "anim": "rain", "emoji": ["🦩", "🦐"], "drop": "🦐"},
+    {"text": "It's the same kind of pigment that makes carrots orange.", "anim": "versus", "sides": [{"emoji": "🥕", "label": "CARROT", "value": "ORANGE"}, {"emoji": "🦩", "label": "FLAMINGO", "value": "PINK"}]},
+    {"text": "And it's slow. It takes about two to three years for a young flamingo to reach full pink.", "anim": "timeline", "points": [{"year": "HATCH", "label": "GREY", "emoji": "🐣"}, {"year": "2–3 YRS", "label": "PINK", "emoji": "🦩"}], "gap": "eating shrimp & algae"},
+    {"text": "To eat, they flip their heads upside down and pump water through their beaks about twelve times a second.", "anim": "stat", "to": 12, "suffix": "x", "label": "PUMPS PER SECOND", "emoji": ["🦩", "💧"]},
+    {"text": "Zoos even add pigment to their food. Without it, flamingos slowly fade to pale pink or white.", "anim": "zoom", "emoji": ["🦩", "🍽️"], "orbit": "✨"},
+    {"text": "The twist? Parents feed their chicks a bright red milk from their throats, and doing that can drain them almost white.", "anim": "shake", "emoji": ["🦩", "🤯"]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
