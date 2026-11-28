@@ -1,0 +1,18 @@
+{
+  "title": "Your Body Makes 4 Million New Cells Every Second 🧬 #shorts",
+  "description": "Your body replaces about 330 billion cells every day – nearly 4 million every second. Around 86% of them are blood cells, red blood cells live only about 120 days, and your gut lining is renewed every 3 to 5 days. That adds up to roughly 80 grams of new cells a day, and by count you replace about all your cells every 80 to 90 days. The 'every seven years' idea is a myth – and most brain neurons are never replaced at all.\n\nSources: Sender & Milo, Nature Medicine (2021), Weizmann Institute of Science, Scientific American, ScienceAlert, Harvard BioNumbers, Live Science\n\n#shorts #facts #crazyfacts #humanbody #biology #science #cells #didyouknow",
+  "tags": ["facts", "crazy facts", "human body", "human body facts", "cells", "cell turnover", "biology", "science", "red blood cells", "seven year myth", "did you know", "shorts"],
+  "comment": "How many new cells do you think your body made while watching this? 🧬👇",
+  "banner": "CRAZY FACTS",
+  "scenes": [
+    {"text": "Right now, while you watch this, your body is making about four million new cells. Every single second.", "anim": "title", "headline": "4 MILLION\nNEW CELLS\nPER SECOND", "emoji": ["🧬", "🤯"]},
+    {"text": "In 2021, scientists at the Weizmann Institute in Israel added up how fast every part of the body renews itself.", "anim": "zoom", "emoji": ["🔬", "🧪"], "orbit": "🧬"},
+    {"text": "The result: about three hundred thirty billion cells are replaced every day.", "anim": "stat", "to": 330, "suffix": " B", "label": "CELLS PER DAY", "emoji": ["🧬", "⏰"]},
+    {"text": "Most of them are blood. Eighty-six percent of all new cells are blood cells.", "anim": "rain", "emoji": ["🩸", "❤️"], "drop": "🩸"},
+    {"text": "A red blood cell lives about four months. The cells lining your gut? Just three to five days.", "anim": "versus", "sides": [{"emoji": "🩸", "label": "BLOOD CELL", "value": "120 DAYS"}, {"emoji": "🍔", "label": "GUT LINING", "value": "3–5 DAYS"}]},
+    {"text": "All together, that's about eighty grams of brand new you, every single day.", "anim": "count", "to": 80, "label": "GRAMS PER DAY", "emoji": ["🧬"], "under": "⚖️"},
+    {"text": "By count, you swap out almost all your cells in about three months. Not every seven years. That's a myth.", "anim": "timeline", "points": [{"year": "DAY 1", "label": "YOU", "emoji": "🙂"}, {"year": "DAY 90", "label": "NEW YOU", "emoji": "😎"}], "gap": "most cells replaced"},
+    {"text": "The twist? Most of your brain cells and the lenses of your eyes are never replaced. They stay with you for life.", "anim": "shake", "emoji": ["🧠", "👀"]},
+    {"text": "Subscribe for a new crazy fact every day!", "anim": "subscribe"}
+  ]
+}
